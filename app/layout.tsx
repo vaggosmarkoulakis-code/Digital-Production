@@ -41,11 +41,26 @@ export const metadata: Metadata = {
     description:
       "Σύγχρονες ιστοσελίδες, e-shops και ψηφιακά προϊόντα με καθαρό design και τεχνολογία που αντέχει στον χρόνο.",
     locale: "el_GR",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Το σήμα του Markoulakis Digital Studio",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Markoulakis Digital Studio",
+    description:
+      "Σύγχρονες ιστοσελίδες, e-shops και ψηφιακά προϊόντα με καθαρό design.",
+    images: ["/og-image.jpg"],
   },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
   },
 };
 

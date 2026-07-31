@@ -781,6 +781,21 @@ section {
   align-items: center;
 }
 
+.hero-mark {
+  width: clamp(86px, 9vw, 120px);
+  aspect-ratio: 1;
+  margin-bottom: clamp(18px, 2.4vw, 30px);
+  border-radius: 30%;
+  overflow: hidden;
+  box-shadow: 0 26px 50px -22px rgba(10, 45, 120, 0.55);
+}
+
+.hero-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .hero-kicker {
   display: inline-flex;
   align-items: center;
@@ -1031,16 +1046,16 @@ section {
   width: 60px;
   height: 60px;
   border-radius: 19px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(140deg, var(--electric), var(--electric-deep));
-  box-shadow: 0 14px 30px -12px rgba(10, 92, 255, 0.85);
+  overflow: hidden;
   flex: 0 0 auto;
+  box-shadow: 0 14px 30px -14px rgba(10, 45, 120, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.9);
 }
 
-.avatar-mark svg {
-  width: 32px;
-  height: 32px;
+.avatar-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-top h3 {

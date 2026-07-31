@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import {
@@ -662,6 +663,21 @@ export default function Home() {
         {/* ------------------------------------------------------- Hero */}
         <section className="hero">
           <div className="hero-inner shell">
+            <m.div
+              className="hero-mark"
+              initial={{ opacity: 0, scale: 0.86 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Image
+                src="/logo-hero.webp"
+                alt="Το σήμα του Markoulakis Digital Studio"
+                width={512}
+                height={512}
+                priority
+              />
+            </m.div>
+
             <m.p
               className="hero-kicker"
               initial={{ opacity: 0, y: 14 }}
@@ -760,7 +776,12 @@ export default function Home() {
               <SpotlightSurface className="profile-card">
                 <div className="profile-top">
                   <span className="avatar-mark">
-                    <MarkLogo />
+                    <Image
+                      src="/logo-mark.webp"
+                      alt=""
+                      width={320}
+                      height={320}
+                    />
                   </span>
                   <div>
                     <h3>{tr(profile.name)}</h3>
