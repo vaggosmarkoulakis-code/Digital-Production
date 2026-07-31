@@ -125,6 +125,26 @@ const padItems = pads.map(([cx, cy, r]) => {
   return { cx, cy, r, from: at - 0.04, to: at + 0.03 };
 });
 
+/** Rough run length of a trace, used only to rank them. */
+function runLength(d: string) {
+  const pts = points(d);
+  let total = 0;
+  for (let i = 1; i < pts.length; i += 1) {
+    total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  }
+  return total;
+}
+
+/* Current runs on the longest trunks only. Every trace carrying a chasing dash
+   would mean repainting the whole board each frame; a dozen long ones read as a
+   live board and leave the frame budget alone. Delays are spread so the pulses
+   never line up into a single blink. */
+const liveTraces = traceItems
+  .map((item, index) => ({ ...item, index, length: runLength(item.d) }))
+  .sort((a, b) => b.length - a.length)
+  .slice(0, 12)
+  .map((item) => ({ ...item, delay: (item.index * 0.73) % 4.2 }));
+
 const chipItems = chips.map((chip) => {
   const [start, end] = windowFor(chip.y);
   return { chip, pins: chipPins(chip), start, end };
@@ -153,6 +173,39 @@ function Trace({
       strokeLinecap="round"
       strokeLinejoin="round"
       style={{ pathLength }}
+    />
+  );
+}
+
+/**
+ * A charge running the length of a trace. It is a second path rather than a
+ * setting on the first: framer drives the draw-in through `pathLength`, which
+ * it implements as the stroke dash pattern — the same two properties the chase
+ * needs. It fades in as its trace finishes drawing, so no current ever appears
+ * on copper that is not there yet.
+ */
+function Charge({
+  d,
+  end,
+  delay,
+  progress,
+}: {
+  d: string;
+  end: number;
+  delay: number;
+  progress: MotionValue<number>;
+}) {
+  const opacity = useTransform(progress, [end - 0.03, end], [0, 1]);
+  return (
+    <m.path
+      className="circuit-charge"
+      d={d}
+      pathLength={1}
+      fill="none"
+      stroke="var(--electric)"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      style={{ opacity, animationDelay: `${delay}s` }}
     />
   );
 }
@@ -284,6 +337,9 @@ function CircuitBoard() {
           ))}
           {traceItems.map((item) => (
             <Trace key={item.d} {...item} progress={progress} />
+          ))}
+          {liveTraces.map((item) => (
+            <Charge key={item.d} d={item.d} end={item.end} delay={item.delay} progress={progress} />
           ))}
           {padItems.map((item, index) => (
             <Pad key={`${item.cx}-${item.cy}-${index}`} {...item} progress={progress} />

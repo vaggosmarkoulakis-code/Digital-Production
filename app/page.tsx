@@ -8,9 +8,9 @@ import {
   domAnimation,
   m,
   useMotionValue,
+  useMotionValueEvent,
   useScroll,
   useSpring,
-  useTransform,
 } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -445,10 +445,15 @@ function SomaMark() {
   );
 }
 
-/** The process, as a rail that slides along while the section passes. */
+/**
+ * The process, as a carousel. It advances itself while the section passes, but
+ * it is a real scroll container underneath — so anyone who wants to go back, or
+ * ahead, or just look at one card, can swipe it. The first time they move it,
+ * the automatic advance steps aside for good; nothing is more irritating than a
+ * rail that drags itself out from under your thumb.
+ */
 function ProcessRail({ lang }: { lang: Lang }) {
   const rail = useRef<HTMLDivElement>(null);
-  const track = useRef<HTMLDivElement>(null);
   const still = useMotionOff();
   const { scrollYProgress } = useScroll({
     target: rail,
@@ -456,34 +461,60 @@ function ProcessRail({ lang }: { lang: Lang }) {
   });
   const drift = useSpring(scrollYProgress, { stiffness: 90, damping: 30, restDelta: 0.001 });
 
-  /* How far the track has to move to bring its end into view. Measured rather
-     than guessed at a percentage: the card count is fixed but the rail's width
-     is not, so a share that reveals everything on a desktop leaves the last
-     steps unreachable on a phone. Held in a motion value, so re-measuring
-     never re-renders. */
-  const span = useMotionValue(0);
-  useEffect(() => {
-    const railEl = rail.current;
-    const trackEl = track.current;
-    if (!railEl || !trackEl) return;
-    const measure = () => span.set(Math.max(0, trackEl.scrollWidth - railEl.clientWidth));
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(railEl);
-    observer.observe(trackEl);
-    return () => observer.disconnect();
-  }, [span]);
+  /* The last position written from here, and whether the reader has taken over.
+     Refs, not state: the rail must not re-render on every frame of a scroll. */
+  const driven = useRef(-1);
+  const taken = useRef(false);
+  /* Mirrored into state once, purely so the container can switch on snapping.
+     Snap points and a frame-by-frame scrollLeft fight each other, so the rail
+     only starts snapping after it has stopped driving itself. */
+  const [handedOver, setHandedOver] = useState(false);
 
-  /* Runs between the section entering and leaving, with a little dead space at
-     each end so the first card is still there when the section is centred. */
-  const x = useTransform([drift, span], ([progress, distance]: number[]) => {
+  /* Handover is detected from the rail's own position, not from input events.
+     A touch is the wrong signal on a phone: the finger that scrolls the page
+     often lands on the rail first, and that must not count. A scrollLeft that
+     no longer matches what was last written can only have come from the reader. */
+  useEffect(() => {
+    const el = rail.current;
+    if (!el) return;
+    const check = () => {
+      if (taken.current || driven.current < 0) return;
+      if (Math.abs(el.scrollLeft - driven.current) < 2) return;
+      taken.current = true;
+      setHandedOver(true);
+    };
+    el.addEventListener("scroll", check, { passive: true });
+    return () => el.removeEventListener("scroll", check);
+  }, []);
+
+  /* Travel is read off the container each frame rather than guessed at a
+     percentage: the card count is fixed but the rail's width is not, so a share
+     that reveals everything on a desktop leaves the last steps unreachable on a
+     phone. Writing scrollLeft keeps this outside React entirely. */
+  useMotionValueEvent(drift, "change", (progress) => {
+    const el = rail.current;
+    if (!el || taken.current || still) return;
+    const span = el.scrollWidth - el.clientWidth;
+    if (span <= 0) return;
+    /* A little dead space at each end, so the first card is still the first
+       card when the section arrives at the middle of the screen. */
     const eased = Math.min(1, Math.max(0, (progress - 0.12) / 0.72));
-    return -distance * eased;
+    const next = span * eased;
+    if (Math.abs(next - el.scrollLeft) > 0.5) {
+      el.scrollLeft = next;
+      driven.current = el.scrollLeft;
+    }
   });
 
   return (
-    <div className="process-rail" ref={rail}>
-      <m.div className="process-track" ref={track} style={still ? undefined : { x }}>
+    <div
+      className={handedOver ? "process-rail is-manual" : "process-rail"}
+      ref={rail}
+      tabIndex={0}
+      role="group"
+      aria-label={lang === "el" ? "Τα βήματα της διαδικασίας" : "The steps of the process"}
+    >
+      <div className="process-track">
         {processSteps.map((step) => {
           const StepIcon = step.icon;
           return (
@@ -495,7 +526,7 @@ function ProcessRail({ lang }: { lang: Lang }) {
             </div>
           );
         })}
-      </m.div>
+      </div>
     </div>
   );
 }

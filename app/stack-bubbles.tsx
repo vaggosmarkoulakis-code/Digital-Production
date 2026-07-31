@@ -28,30 +28,35 @@ import {
 type Node = {
   name: string;
   Icon: (props: { className?: string }) => React.JSX.Element;
+  /* Landscape placement — percentages of a field that is wider than it is tall. */
   x: number;
   y: number;
+  /* Portrait placement, for the phone. The landscape arrangement squeezed into a
+     narrow column put bubbles on top of each other and squashed every trace, so
+     the board is laid out a second time as a column instead of being scaled. */
+  mx: number;
+  my: number;
   size: number;
   dur: number;
   delay: number;
   drift: number;
 };
 
-/* Positions are percentages of the field, shared with the trace layer below. */
 const nodes: Record<string, Node> = {
-  next: { name: "Next.js", Icon: NextIcon, x: 38, y: 34, size: 134, dur: 12, delay: 0.4, drift: 5 },
-  react: { name: "React", Icon: ReactIcon, x: 60, y: 30, size: 134, dur: 13, delay: 0, drift: -4 },
-  ts: { name: "TypeScript", Icon: TypeScriptIcon, x: 49, y: 66, size: 134, dur: 11.5, delay: 0.9, drift: 4 },
+  next: { name: "Next.js", Icon: NextIcon, x: 38, y: 34, mx: 30, my: 23, size: 134, dur: 12, delay: 0.4, drift: 5 },
+  react: { name: "React", Icon: ReactIcon, x: 60, y: 30, mx: 70, my: 36, size: 134, dur: 13, delay: 0, drift: -4 },
+  ts: { name: "TypeScript", Icon: TypeScriptIcon, x: 49, y: 66, mx: 36, my: 55, size: 134, dur: 11.5, delay: 0.9, drift: 4 },
 
-  js: { name: "JavaScript", Icon: JavaScriptIcon, x: 22, y: 60, size: 96, dur: 10, delay: 1.5, drift: -4 },
-  node: { name: "Node.js", Icon: NodeIcon, x: 76, y: 56, size: 96, dur: 11, delay: 0.7, drift: 5 },
-  tailwind: { name: "Tailwind", Icon: TailwindIcon, x: 70, y: 78, size: 96, dur: 12.5, delay: 2, drift: -5 },
+  js: { name: "JavaScript", Icon: JavaScriptIcon, x: 22, y: 60, mx: 62, my: 71, size: 96, dur: 10, delay: 1.5, drift: -4 },
+  node: { name: "Node.js", Icon: NodeIcon, x: 76, y: 56, mx: 82, my: 58, size: 96, dur: 11, delay: 0.7, drift: 5 },
+  tailwind: { name: "Tailwind", Icon: TailwindIcon, x: 70, y: 78, mx: 34, my: 85, size: 96, dur: 12.5, delay: 2, drift: -5 },
 
-  html: { name: "HTML5", Icon: HtmlIcon, x: 12, y: 28, size: 68, dur: 9, delay: 1.1, drift: 4 },
-  css: { name: "CSS3", Icon: CssIcon, x: 27, y: 16, size: 68, dur: 9.5, delay: 2.4, drift: -3 },
-  firebase: { name: "Firebase", Icon: FirebaseIcon, x: 88, y: 34, size: 68, dur: 10.5, delay: 0.3, drift: 4 },
-  figma: { name: "Figma", Icon: FigmaIcon, x: 92, y: 70, size: 68, dur: 8.5, delay: 1.8, drift: -3 },
-  git: { name: "Git", Icon: GitIcon, x: 10, y: 82, size: 68, dur: 11, delay: 2.6, drift: 3 },
-  vercel: { name: "Vercel", Icon: VercelIcon, x: 60, y: 92, size: 68, dur: 9.8, delay: 1.3, drift: -4 },
+  html: { name: "HTML5", Icon: HtmlIcon, x: 12, y: 28, mx: 76, my: 9, size: 68, dur: 9, delay: 1.1, drift: 4 },
+  css: { name: "CSS3", Icon: CssIcon, x: 27, y: 16, mx: 24, my: 8, size: 68, dur: 9.5, delay: 2.4, drift: -3 },
+  firebase: { name: "Firebase", Icon: FirebaseIcon, x: 88, y: 34, mx: 90, my: 76, size: 68, dur: 10.5, delay: 0.3, drift: 4 },
+  figma: { name: "Figma", Icon: FigmaIcon, x: 92, y: 70, mx: 10, my: 68, size: 68, dur: 8.5, delay: 1.8, drift: -3 },
+  git: { name: "Git", Icon: GitIcon, x: 10, y: 82, mx: 11, my: 42, size: 68, dur: 11, delay: 2.6, drift: 3 },
+  vercel: { name: "Vercel", Icon: VercelIcon, x: 60, y: 92, mx: 66, my: 92, size: 68, dur: 9.8, delay: 1.3, drift: -4 },
 };
 
 const links: Array<[string, string]> = [
@@ -69,25 +74,43 @@ const links: Array<[string, string]> = [
   ["ts", "vercel"],
 ];
 
+type Point = { x: number; y: number };
+
 /**
- * A trace between two nodes: run along x, chamfer the corner at 45°, then drop
- * to the target — the same routing language as the board behind the page.
+ * A trace between two points: run along x, chamfer the corner, then drop to the
+ * target — the same routing language as the board behind the page. The chamfer
+ * is given per axis because the field is stretched to fit (`preserveAspectRatio
+ * ="none"`), so equal units are not equal pixels.
  */
-function route(a: Node, b: Node) {
+function route(a: Point, b: Point, cx: number, cy: number) {
   const stepX = Math.sign(b.x - a.x) || 1;
   const stepY = Math.sign(b.y - a.y) || 1;
-  const chamfer = 3.5;
-  const corner = b.x - stepX * chamfer;
-  return `M${a.x} ${a.y} H${corner} L${b.x} ${a.y + stepY * chamfer} V${b.y}`;
+  const corner = b.x - stepX * cx;
+  return `M${a.x} ${a.y} H${corner} L${b.x} ${a.y + stepY * cy} V${b.y}`;
 }
 
-/* Where each trace turns. Pads render as round elements rather than SVG
-   circles, so the field's aspect ratio can never squash them into ellipses. */
-const joints = links.map(([from, to]) => {
-  const a = nodes[from];
-  const b = nodes[to];
-  return { x: b.x, y: a.y + Math.sign(b.y - a.y) * 3.5, key: `${from}-${to}` };
-});
+/**
+ * One wiring for a given placement: the traces, and the pads where they turn.
+ * Pads render as round elements rather than SVG circles, so the field's aspect
+ * ratio can never squash them into ellipses. Both wirings are built once at
+ * module scope and the stylesheet shows whichever suits the viewport.
+ */
+function wire(pick: (node: Node) => Point, cx: number, cy: number) {
+  return links.map(([from, to]) => {
+    const a = pick(nodes[from]);
+    const b = pick(nodes[to]);
+    return {
+      key: `${from}-${to}`,
+      d: route(a, b, cx, cy),
+      joint: { x: b.x, y: a.y + (Math.sign(b.y - a.y) || 1) * cy },
+    };
+  });
+}
+
+const wirings = [
+  { modifier: "wide", traces: wire((n) => ({ x: n.x, y: n.y }), 3.5, 3.5) },
+  { modifier: "tall", traces: wire((n) => ({ x: n.mx, y: n.my }), 3.5, 2.6) },
+];
 
 const list = Object.values(nodes);
 
@@ -95,33 +118,47 @@ function StackBubbles() {
   const still = useMotionOff();
   return (
     <div className="bubble-field">
-      <svg
-        className="bubble-links"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        {links.map(([from, to]) => (
-          <path
-            key={`${from}-${to}`}
-            d={route(nodes[from], nodes[to])}
-            fill="none"
-            stroke="var(--circuit-pad)"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
-        ))}
-      </svg>
+      {wirings.map(({ modifier, traces }) => (
+        <div className={`bubble-wiring bubble-wiring--${modifier}`} key={modifier} aria-hidden="true">
+          <svg className="bubble-links" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {traces.map((trace, index) => (
+              <g key={trace.key}>
+                <path
+                  d={trace.d}
+                  fill="none"
+                  stroke="var(--circuit-pad)"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+                {/* The charge running the same route: a short lit segment of a
+                    dash pattern normalised to the path's own length, so every
+                    trace takes the same time however long it is. Staggered by
+                    index, or the whole board would blink in unison. */}
+                <path
+                  className="bubble-charge"
+                  d={trace.d}
+                  pathLength={1}
+                  fill="none"
+                  stroke="var(--electric)"
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                  style={{ animationDelay: `${(index * 0.47) % 3.2}s` }}
+                />
+              </g>
+            ))}
+          </svg>
 
-      {joints.map((joint) => (
-        <span
-          className="bubble-joint"
-          key={joint.key}
-          style={{ left: `${joint.x}%`, top: `${joint.y}%` }}
-          aria-hidden="true"
-        />
+          {traces.map((trace) => (
+            <span
+              className="bubble-joint"
+              key={trace.key}
+              style={{ left: `${trace.joint.x}%`, top: `${trace.joint.y}%` }}
+            />
+          ))}
+        </div>
       ))}
 
       {list.map((node) => (
@@ -133,8 +170,10 @@ function StackBubbles() {
           title={node.name}
           style={
             {
-              left: `${node.x}%`,
-              top: `${node.y}%`,
+              "--x": `${node.x}%`,
+              "--y": `${node.y}%`,
+              "--mx": `${node.mx}%`,
+              "--my": `${node.my}%`,
               "--size": node.size,
             } as React.CSSProperties
           }

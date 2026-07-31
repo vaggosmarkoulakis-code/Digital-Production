@@ -343,6 +343,14 @@ ul {
   opacity: 0.72;
 }
 
+/* Current on the board's trunks. The dash pattern is normalised by the path's
+   own `pathLength="1"`, so a long trace and a short one carry the pulse at the
+   same speed and the same apparent size. */
+.circuit-charge {
+  stroke-dasharray: 0.05 0.95;
+  animation: charge-run 4.2s linear infinite;
+}
+
 .cursor-glow {
   position: fixed;
   top: 0;
@@ -905,6 +913,7 @@ section {
 }
 
 .hero-stats {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -926,8 +935,11 @@ section {
   line-height: 1;
 }
 
+/* Deliberately not a containing block: the note below anchors to the whole
+   stats row instead, so its width is the row's and it cannot run off-screen
+   the way it did when it hung off one narrow tile. */
 .stat-tile-note {
-  position: relative;
+  position: static;
 }
 
 .stat-info {
@@ -956,12 +968,22 @@ section {
 .stat-pop {
   position: absolute;
   left: 0;
+  right: 0;
   top: calc(100% + 12px);
   z-index: 8;
-  width: min(320px, 76vw);
+  max-width: 420px;
   padding: 18px 20px;
   border-radius: var(--radius-md);
   text-align: left;
+  /* Opaque, not glass. Everywhere else the material sits over a wash; here it
+     lands on top of the profile card, and at any transparency the name and the
+     logo behind read straight through the explanation. With nothing showing
+     through there is also nothing for the backdrop blur to do. */
+  background: linear-gradient(155deg, #ffffff, #f2f6ff);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 30px 60px -28px rgba(10, 45, 120, 0.55),
+    0 2px 10px -4px rgba(10, 45, 120, 0.28);
 }
 
 .stat-pop p {
@@ -1195,13 +1217,45 @@ a.profile-row:hover {
   margin-top: clamp(18px, 2.5vw, 34px);
 }
 
+/* Two wirings are in the markup — one laid out landscape, one as a column for
+   the phone. Only one is ever shown; the other is display:none, so it costs
+   nothing to lay out or paint. */
+.bubble-wiring {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.bubble-wiring--tall {
+  display: none;
+}
+
 .bubble-links {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
   opacity: 0.9;
+}
+
+/* Current in the traces: one short lit dash chasing the length of each path.
+   `pathLength: 1` normalises every trace to the same scale, so the dash keeps
+   its size and speed whether the run is long or short. */
+.bubble-charge {
+  stroke-dasharray: 0.14 0.86;
+  animation: charge-run 3.2s linear infinite;
+}
+
+/* One full period per cycle, so the loop has no seam. No drop-shadow glow: a
+   filter on something that repaints every frame is the one effect this page
+   cannot afford. */
+@keyframes charge-run {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .bubble-joint {
@@ -1218,6 +1272,8 @@ a.profile-row:hover {
 .bubble {
   position: absolute;
   z-index: 1;
+  left: var(--x);
+  top: var(--y);
   width: calc(var(--size) * var(--bubble-scale) * 1px);
   height: calc(var(--size) * var(--bubble-scale) * 1px);
   margin-left: calc(var(--size) * var(--bubble-scale) * -0.5px);
@@ -1578,25 +1634,53 @@ a.profile-row:hover {
 /* Process                                                                */
 /* --------------------------------------------------------------------- */
 
-/* The rail slides along while the section passes, so the steps read in
-   order without the reader having to drag anything. */
+/* The rail advances by itself while the section passes, so the steps read in
+   order without anyone having to drag anything — but it is a genuine scroll
+   container, so it can also be swiped. `overscroll-behavior-x: contain` keeps a
+   swipe past the last card from triggering the browser's back gesture. */
 .process-rail {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  /* Explicitly instant: a smooth scroll would animate away from the position
+     just written and read as the reader having grabbed the rail. */
+  scroll-behavior: auto;
   margin-inline: calc(var(--pad-x) * -1);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.process-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Snapping only once the reader has taken the wheel: snap points and a
+   frame-by-frame scrollLeft pull in opposite directions. */
+.process-rail.is-manual {
+  scroll-snap-type: x proximity;
+}
+
+.process-rail:focus-visible {
+  outline: 2px solid var(--electric);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
 }
 
 /* The inset lives on the track, so its scrollWidth already accounts for it and
-   the measured travel lands the last card exactly inside the padding. */
+   the travel lands the last card exactly inside the page padding. */
 .process-track {
   display: flex;
   gap: 14px;
   width: max-content;
   padding-inline: var(--pad-x);
-  will-change: transform;
+  /* Room for the hover lift and the cards' shadows, which the container's
+     vertical clip would otherwise shave off. */
+  padding-block: 10px 14px;
 }
 
 .process-step {
   flex: 0 0 clamp(200px, 21vw, 264px);
+  scroll-snap-align: center;
   padding: 26px;
   border-radius: var(--radius-md);
   display: flex;
@@ -1917,9 +2001,25 @@ a.profile-row:hover {
     padding: 9px 15px 9px 12px;
   }
 
+  /* The phone gets the column wiring and a field tall enough to hold it. The
+     old square-ish field had the landscape layout crushed into it: bubbles
+     touching, traces bent into unreadable diagonals. */
   .bubble-field {
     --bubble-scale: 0.6;
-    height: clamp(300px, 78vw, 360px);
+    height: clamp(420px, 120vw, 520px);
+  }
+
+  .bubble-wiring--wide {
+    display: none;
+  }
+
+  .bubble-wiring--tall {
+    display: block;
+  }
+
+  .bubble {
+    left: var(--mx);
+    top: var(--my);
   }
 
   .float-a,
@@ -1973,6 +2073,13 @@ a.profile-row:hover {
   .orbit-ring,
   .status-dot::after {
     animation: none !important;
+  }
+
+  /* Stopping the chase mid-run would leave a stray dash sitting on every
+     trace, so the current is taken off the board entirely. */
+  .bubble-charge,
+  .circuit-charge {
+    display: none;
   }
 
   *,
