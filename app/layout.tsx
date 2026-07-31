@@ -1,15 +1,40 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Commissioner, Manrope } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+/* Manrope carries the headlines and the wordmark — geometric, wide caps.
+   Commissioner does the reading: humanist, quieter, and it keeps small
+   letter-spaced labels legible. Both ship Greek, which the page needs. */
+const display = Manrope({
+  variable: "--font-display",
   subsets: ["latin", "greek"],
+  weight: ["600", "700", "800"],
   display: "swap",
 });
 
+const sans = Commissioner({
+  variable: "--font-sans",
+  subsets: ["latin", "greek"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+/**
+ * Absolute URLs in the metadata — the link-preview image above all — are built
+ * from this. It used to be hardcoded to a domain that does not resolve, which
+ * pointed every preview at an image that could never load. Netlify supplies the
+ * real address of whatever is being built: DEPLOY_PRIME_URL is this deploy
+ * (a preview gets its own), URL is the production site and follows a custom
+ * domain automatically once one is attached.
+ */
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.DEPLOY_PRIME_URL ??
+  process.env.URL ??
+  "https://portofoliomds.netlify.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://markoulakis.dev"),
+  metadataBase: new URL(siteUrl),
   title: "Markoulakis Digital Studio | Βαγγέλης Μαρκουλάκης",
   description:
     "Portfolio του Βαγγέλη Μαρκουλάκη. Σχεδιάζω και αναπτύσσω σύγχρονες ιστοσελίδες, e-shops, mobile εφαρμογές και ψηφιακά εργαλεία για φιλόδοξες επιχειρήσεις.",
@@ -30,10 +55,26 @@ export const metadata: Metadata = {
     description:
       "Σύγχρονες ιστοσελίδες, e-shops και ψηφιακά προϊόντα με καθαρό design και τεχνολογία που αντέχει στον χρόνο.",
     locale: "el_GR",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Το σήμα του Markoulakis Digital Studio",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Markoulakis Digital Studio",
+    description:
+      "Σύγχρονες ιστοσελίδες, e-shops και ψηφιακά προϊόντα με καθαρό design.",
+    images: ["/og-image.jpg"],
   },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
   },
 };
 
@@ -48,7 +89,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="el">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+      <body className={`${display.variable} ${sans.variable} antialiased`}>{children}</body>
     </html>
   );
 }

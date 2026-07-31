@@ -10,6 +10,7 @@ import {
   useMotionValue,
   useScroll,
   useSpring,
+  useTransform,
 } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -20,6 +21,7 @@ import {
   Code2,
   Gauge,
   Globe2,
+  Info,
   GraduationCap,
   Languages,
   Layers,
@@ -37,6 +39,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import Atmosphere from "./atmosphere";
 import CircuitBoard from "./circuit";
 import { useMotionOff } from "./use-motion-off";
 import StackBubbles from "./stack-bubbles";
@@ -70,11 +73,10 @@ const navLinks: Array<{ href: string; label: Copy }> = [
   { href: "#process", label: { el: "Διαδικασία", en: "Process" } },
 ];
 
-const heroStats: Array<{ value: Copy; label: Copy }> = [
-  { value: { el: "≤ 2 εβδ.", en: "≤ 2 wks" }, label: { el: "Παράδοση", en: "Delivery" } },
-  { value: { el: "0", en: "0" }, label: { el: "Templates", en: "Templates" } },
-  { value: { el: "98+", en: "98+" }, label: { el: "Lighthouse", en: "Lighthouse" } },
-];
+const lighthouseNote: Copy = {
+  el: "Το Lighthouse είναι το εργαλείο της Google που βαθμολογεί μια σελίδα στα 100 σε ταχύτητα, προσβασιμότητα, καλές πρακτικές και SEO. Στοχεύω σε 98+ σε κάθε παράδοση.",
+  en: "Lighthouse is Google’s tool that scores a page out of 100 on speed, accessibility, best practices and SEO. I aim for 98+ on every delivery.",
+};
 
 const services: Array<{ icon: LucideIcon; title: Copy; items: Array<Copy> }> = [
   {
@@ -171,8 +173,11 @@ const processSteps: Array<{ icon: LucideIcon; title: Copy }> = [
 const values: Array<{ icon: LucideIcon; title: Copy }> = [
   { icon: GraduationCap, title: { el: "Πληροφορική στην ΑΣΟΕΕ", en: "Computer Science at AUEB" } },
   { icon: Layers, title: { el: "Μηχανική σκέψη & design", en: "Engineering meets design" } },
-  { icon: Gauge, title: { el: "Ταχύτητα ως χαρακτηριστικό", en: "Speed as a feature" } },
-  { icon: Sparkles, title: { el: "Χωρίς έτοιμα templates", en: "No ready-made templates" } },
+  {
+    icon: Gauge,
+    title: { el: "Ταχύτητα και εμφάνιση ως χαρακτηριστικό", en: "Speed and looks as a feature" },
+  },
+  { icon: Sparkles, title: { el: "Λίγα projects τη φορά", en: "A few projects at a time" } },
 ];
 
 const workTags = ["Next.js", "UI/UX", "Responsive", "SEO"];
@@ -180,21 +185,6 @@ const workTags = ["Next.js", "UI/UX", "Responsive", "SEO"];
 /* ------------------------------------------------------------------ */
 /* Small building blocks                                               */
 /* ------------------------------------------------------------------ */
-
-function MarkLogo({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-      <path
-        d="M8 48 21.5 13 32 35 43.5 8 56 48"
-        stroke="currentColor"
-        strokeWidth="5.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M8 56h48" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity=".45" />
-    </svg>
-  );
-}
 
 function InstagramGlyph({ className = "" }: { className?: string }) {
   return (
@@ -370,6 +360,146 @@ function CursorGlow() {
   return <m.div className="cursor-glow" style={{ x: sx, y: sy }} aria-hidden="true" />;
 }
 
+/** A stat with a note behind a button, for figures that need a sentence. */
+function StatWithNote({
+  value,
+  label,
+  note,
+  buttonLabel,
+  closeLabel,
+}: {
+  value: string;
+  label: string;
+  note: string;
+  buttonLabel: string;
+  closeLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    const onDown = (event: globalThis.MouseEvent) => {
+      if (!wrap.current?.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="glass stat-tile stat-tile-note" ref={wrap}>
+      <b>{value}</b>
+      <span>
+        {label}
+        <button
+          type="button"
+          className="stat-info"
+          onClick={() => setOpen((current) => !current)}
+          aria-expanded={open}
+          aria-label={buttonLabel}
+        >
+          <Info />
+        </button>
+      </span>
+      {open && (
+        <m.div
+          className="glass stat-pop"
+          role="dialog"
+          aria-label={buttonLabel}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <p>{note}</p>
+          <button type="button" onClick={() => setOpen(false)}>
+            {closeLabel}
+          </button>
+        </m.div>
+      )}
+    </div>
+  );
+}
+
+/** SOMA's mark: the wordmark alone, orange on black. */
+function SomaMark() {
+  return (
+    <svg className="soma-mark" viewBox="0 0 420 130" role="img" aria-label="SOMA">
+      <defs>
+        <linearGradient id="somaGrad" x1="40" y1="20" x2="380" y2="112" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ffc27a" />
+          <stop offset="0.45" stopColor="#ff8330" />
+          <stop offset="1" stopColor="#df4510" />
+        </linearGradient>
+      </defs>
+      <text x="203" y="92" textAnchor="middle" fill="url(#somaGrad)">
+        SOMA
+      </text>
+    </svg>
+  );
+}
+
+/** The process, as a rail that slides along while the section passes. */
+function ProcessRail({ lang }: { lang: Lang }) {
+  const rail = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
+  const still = useMotionOff();
+  const { scrollYProgress } = useScroll({
+    target: rail,
+    offset: ["start end", "end start"],
+  });
+  const drift = useSpring(scrollYProgress, { stiffness: 90, damping: 30, restDelta: 0.001 });
+
+  /* How far the track has to move to bring its end into view. Measured rather
+     than guessed at a percentage: the card count is fixed but the rail's width
+     is not, so a share that reveals everything on a desktop leaves the last
+     steps unreachable on a phone. Held in a motion value, so re-measuring
+     never re-renders. */
+  const span = useMotionValue(0);
+  useEffect(() => {
+    const railEl = rail.current;
+    const trackEl = track.current;
+    if (!railEl || !trackEl) return;
+    const measure = () => span.set(Math.max(0, trackEl.scrollWidth - railEl.clientWidth));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(railEl);
+    observer.observe(trackEl);
+    return () => observer.disconnect();
+  }, [span]);
+
+  /* Runs between the section entering and leaving, with a little dead space at
+     each end so the first card is still there when the section is centred. */
+  const x = useTransform([drift, span], ([progress, distance]: number[]) => {
+    const eased = Math.min(1, Math.max(0, (progress - 0.12) / 0.72));
+    return -distance * eased;
+  });
+
+  return (
+    <div className="process-rail" ref={rail}>
+      <m.div className="process-track" ref={track} style={still ? undefined : { x }}>
+        {processSteps.map((step) => {
+          const StepIcon = step.icon;
+          return (
+            <div className="glass process-step" key={step.title.en}>
+              <span className="process-icon">
+                <StepIcon />
+              </span>
+              <h3>{t(step.title, lang)}</h3>
+            </div>
+          );
+        })}
+      </m.div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
@@ -435,7 +565,9 @@ function SiteNav({ lang, onToggleLang }: { lang: Lang; onToggleLang: () => void 
       <header className={`nav-dock ${stuck ? "is-stuck" : ""}`}>
         <a className="brand" href="#top" aria-label={tr({ el: "Αρχή σελίδας", en: "Back to top" })}>
           <span className="brand-mark">
-            <MarkLogo />
+            {/* Above the fold and the first thing that identifies the site, so
+                it loads eagerly rather than popping in after the nav paints. */}
+            <Image src="/logo-mark.webp" alt="" width={320} height={320} priority />
           </span>
           <span className="brand-text">
             <b>MARKOULAKIS</b>
@@ -520,11 +652,7 @@ export default function Home() {
 
   return (
     <LazyMotion features={domAnimation} strict>
-      <div className="atmosphere" aria-hidden="true">
-        <span className="aurora aurora-a" />
-        <span className="aurora aurora-b" />
-        <span className="aurora aurora-c" />
-      </div>
+      <Atmosphere />
       <CircuitBoard />
       <CursorGlow />
 
@@ -536,6 +664,21 @@ export default function Home() {
         {/* ------------------------------------------------------- Hero */}
         <section className="hero">
           <div className="hero-inner shell">
+            <m.div
+              className="hero-mark"
+              initial={{ opacity: 0, scale: 0.86 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Image
+                src="/logo-hero.webp"
+                alt="Το σήμα του Markoulakis Digital Studio"
+                width={512}
+                height={512}
+                priority
+              />
+            </m.div>
+
             <m.p
               className="hero-kicker"
               initial={{ opacity: 0, y: 14 }}
@@ -592,18 +735,6 @@ export default function Home() {
                 Instagram
               </MagneticLink>
             </m.div>
-
-            <m.a
-              className="scroll-hint"
-              href="#profile"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.55 }}
-            >
-              <i />
-              {tr({ el: "ΚΥΛΗΣΤΕ", en: "SCROLL" })}
-              <ArrowDown />
-            </m.a>
           </div>
         </section>
 
@@ -624,12 +755,17 @@ export default function Home() {
 
               <Reveal delay={0.1}>
                 <div className="hero-stats">
-                  {heroStats.map((stat) => (
-                    <div className="glass stat-tile" key={stat.label.en}>
-                      <b>{tr(stat.value)}</b>
-                      <span>{tr(stat.label)}</span>
-                    </div>
-                  ))}
+                  <div className="glass stat-tile">
+                    <b>{tr({ el: "≤ 2 εβδ.", en: "≤ 2 wks" })}</b>
+                    <span>{tr({ el: "Παράδοση", en: "Delivery" })}</span>
+                  </div>
+                  <StatWithNote
+                    value="98+"
+                    label="Lighthouse"
+                    note={tr(lighthouseNote)}
+                    buttonLabel={tr({ el: "Τι είναι το Lighthouse;", en: "What is Lighthouse?" })}
+                    closeLabel={tr({ el: "Κλείσιμο", en: "Close" })}
+                  />
                 </div>
               </Reveal>
             </div>
@@ -641,7 +777,12 @@ export default function Home() {
               <SpotlightSurface className="profile-card">
                 <div className="profile-top">
                   <span className="avatar-mark">
-                    <MarkLogo />
+                    <Image
+                      src="/logo-mark.webp"
+                      alt=""
+                      width={320}
+                      height={320}
+                    />
                   </span>
                   <div>
                     <h3>{tr(profile.name)}</h3>
@@ -808,29 +949,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="work-stage">
-              <div className="browser">
-                <div className="browser-bar" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                  <span>SOMA · COCKTAIL BAR</span>
-                </div>
-                <div className="browser-shot">
-                  <Image
-                    src="/soma-showcase.webp"
-                    alt={tr({
-                      el: "Η ιστοσελίδα του SOMA σε υπολογιστή",
-                      en: "The SOMA website on desktop",
-                    })}
-                    fill
-                    sizes="(max-width: 1080px) 90vw, 640px"
-                  />
-                </div>
-              </div>
-              <div className="work-phone" aria-hidden="true">
-                <Image src="/soma-showcase.webp" alt="" fill sizes="130px" />
-              </div>
+            <div className="work-stage soma-stage">
+              <SomaMark />
             </div>
           </GlassCard>
         </section>
@@ -896,22 +1016,7 @@ export default function Home() {
             </h2>
           </Reveal>
 
-          <div className="process-grid">
-            {processSteps.map((step, index) => {
-              const StepIcon = step.icon;
-              return (
-                <GlassCard className="process-step" key={step.title.en} delay={index * 0.05}>
-                  <span className="process-num">
-                    <i>
-                      <StepIcon />
-                    </i>
-                    {`0${index + 1}`}
-                  </span>
-                  <h3>{tr(step.title)}</h3>
-                </GlassCard>
-              );
-            })}
-          </div>
+          <ProcessRail lang={lang} />
         </section>
 
         {/* ------------------------------------------------------ About */}
@@ -1043,7 +1148,7 @@ export default function Home() {
           <div className="glass footer-inner">
             <div className="brand">
               <span className="brand-mark">
-                <MarkLogo />
+                <Image src="/logo-mark.webp" alt="" width={320} height={320} />
               </span>
               <span className="brand-text">
                 <b>MARKOULAKIS</b>
