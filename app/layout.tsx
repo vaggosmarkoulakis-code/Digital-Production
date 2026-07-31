@@ -10,7 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://markoulakis.dev"),
-  title: "Βαγγέλης Μαρκουλάκης | Web Developer & Digital Designer",
+  title: "Markoulakis Digital Studio | Βαγγέλης Μαρκουλάκης",
   description:
     "Portfolio του Βαγγέλη Μαρκουλάκη. Σχεδιάζω και αναπτύσσω σύγχρονες ιστοσελίδες, e-shops, mobile εφαρμογές και ψηφιακά εργαλεία για φιλόδοξες επιχειρήσεις.",
   keywords: [
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Βαγγέλης Μαρκουλάκης" }],
   openGraph: {
     type: "website",
-    title: "Βαγγέλης Μαρκουλάκης | Web Developer & Digital Designer",
+    title: "Markoulakis Digital Studio | Βαγγέλης Μαρκουλάκης",
     description:
       "Σύγχρονες ιστοσελίδες, e-shops και ψηφιακά προϊόντα με καθαρό design και τεχνολογία που αντέχει στον χρόνο.",
     locale: "el_GR",

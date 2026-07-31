@@ -39,24 +39,18 @@
   --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -1px 0 rgba(255, 255, 255, 0.35);
 
-  /* Chart tokens — validated with the dataviz palette validator against a
-     #f7faff chart surface. Single-series mark: 5.03:1 contrast. The four-step
-     ramp passes the ordinal checks (monotone L, ΔL >= 0.06, light end 2.15:1). */
-  --chart-surface: #f7faff;
-  --chart-grid: #dbe6f8;
-  --series-1: #0a5cff;
-  --meter-track: #d5e3ff;
-  --ramp-1: #7fadff;
-  --ramp-2: #5288ff;
-  --ramp-3: #1f63f5;
-  --ramp-4: #0a3fb4;
+  /* Circuit board layer */
+  --circuit-line: rgba(10, 92, 255, 0.32);
+  --circuit-pad: rgba(10, 92, 255, 0.48);
+  --circuit-surface: #f3f7ff;
+  --circuit-chip: rgba(10, 92, 255, 0.06);
 
   /* Rhythm */
   --radius-lg: 30px;
   --radius-md: 20px;
   --radius-sm: 14px;
   --pad-x: max(5vw, 22px);
-  --section-y: clamp(76px, 9vw, 140px);
+  --section-y: clamp(62px, 7.5vw, 118px);
   --maxw: 1320px;
 
   /* Motion */
@@ -201,80 +195,21 @@ ul {
   }
 }
 
-.grid-veil {
+.circuit-field {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image: linear-gradient(rgba(10, 60, 160, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(10, 60, 160, 0.045) 1px, transparent 1px);
-  background-size: 68px 68px;
-  mask-image: radial-gradient(110% 80% at 50% 0%, #000 0%, transparent 78%);
-  -webkit-mask-image: radial-gradient(110% 80% at 50% 0%, #000 0%, transparent 78%);
 }
 
-/* Blue leaves drifting behind the glass ------------------------------- */
-
-.leaf-field {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.leaf {
-  position: absolute;
-  top: 0;
-  animation-name: leaf-fall;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform;
-}
-
-.leaf-sway {
-  display: block;
-  animation-name: leaf-sway;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-
-.leaf-spin {
-  display: block;
-  animation-name: leaf-spin;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-.leaf svg {
+.circuit-field svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
-@keyframes leaf-fall {
-  from {
-    transform: translate3d(0, -18vh, 0);
-  }
-  to {
-    transform: translate3d(0, 118vh, 0);
-  }
-}
-
-@keyframes leaf-sway {
-  from {
-    transform: translateX(calc(var(--drift, 20px) * -1));
-  }
-  to {
-    transform: translateX(var(--drift, 20px));
-  }
-}
-
-@keyframes leaf-spin {
-  to {
-    transform: rotate(360deg);
-  }
+.circuit-field.is-static {
+  opacity: 0.72;
 }
 
 .cursor-glow {
@@ -401,6 +336,21 @@ section {
 }
 
 .section-head h2 em {
+  font-style: normal;
+  color: var(--electric);
+}
+
+.section-head-tight {
+  margin-bottom: clamp(28px, 4vw, 52px);
+}
+
+.section-head-tight h2 {
+  font-size: clamp(2.1rem, 4.2vw, 3.5rem);
+  margin-top: 16px;
+  max-width: 18ch;
+}
+
+.section-head-tight h2 em {
   font-style: normal;
   color: var(--electric);
 }
@@ -760,6 +710,7 @@ section {
 }
 
 .wordmark-accent {
+  font-size: 0.74em;
   background: linear-gradient(100deg, var(--electric) 8%, #45b0ff 92%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -776,13 +727,6 @@ section {
   color: var(--ink);
   letter-spacing: -0.02em;
   max-width: 22ch;
-}
-
-.hero-lead {
-  margin-top: 16px;
-  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
-  color: var(--muted);
-  max-width: 56ch;
 }
 
 .hero-actions {
@@ -812,13 +756,6 @@ section {
 .profile-title em {
   font-style: normal;
   color: var(--electric);
-}
-
-.profile-lead {
-  margin-top: 18px;
-  font-size: 1rem;
-  color: var(--muted);
-  max-width: 46ch;
 }
 
 .hero-stats {
@@ -1064,399 +1001,60 @@ a.profile-row:hover {
 }
 
 /* --------------------------------------------------------------------- */
-/* Tech stack                                                             */
+/* Stack bubbles — icons only, no labels                                  */
 /* --------------------------------------------------------------------- */
 
-.stack-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+.bubble-field {
+  --bubble-scale: 1;
+  position: relative;
+  height: clamp(330px, 38vw, 460px);
+  margin-top: clamp(18px, 2.5vw, 34px);
 }
 
-.stack-tile {
-  padding: 20px 14px;
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  text-align: center;
-  transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
-}
-
-.stack-tile:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 34px 66px -30px rgba(10, 45, 120, 0.55), var(--glass-inset);
-}
-
-.stack-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 15px;
+.bubble {
+  position: absolute;
+  width: calc(var(--size) * var(--bubble-scale) * 1px);
+  height: calc(var(--size) * var(--bubble-scale) * 1px);
+  margin-left: calc(var(--size) * var(--bubble-scale) * -0.5px);
+  margin-top: calc(var(--size) * var(--bubble-scale) * -0.5px);
+  border-radius: 50%;
   display: grid;
   place-items: center;
   color: var(--electric);
-  background: rgba(10, 92, 255, 0.09);
-  border: 1px solid rgba(10, 92, 255, 0.16);
-  transition: background 0.35s ease, color 0.35s ease;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 255, 255, 0.52)
+  );
+  backdrop-filter: blur(20px) saturate(185%);
+  -webkit-backdrop-filter: blur(20px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 46px -20px rgba(10, 45, 120, 0.55),
+    inset 0 2px 0 rgba(255, 255, 255, 0.95);
+  will-change: transform;
 }
 
-.stack-tile:hover .stack-icon {
-  background: linear-gradient(140deg, var(--electric), var(--electric-deep));
-  color: #fff;
-}
-
-.stack-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-.stack-tile b {
-  font-size: 0.83rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-
-.stack-tile small {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-/* --------------------------------------------------------------------- */
-/* Charts                                                                 */
-/* --------------------------------------------------------------------- */
-
-.chart-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.chart-card {
-  --surface: var(--chart-surface);
-  padding: clamp(22px, 2.6vw, 32px);
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  margin: 0;
-}
-
-.chart-card-wide {
-  grid-column: 1 / -1;
-}
-
-.chart-card figcaption h3 {
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
-}
-
-.chart-card figcaption p {
-  margin-top: 6px;
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-
-/* Meters ---------------------------------------------------------------- */
-
-.meter-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px 26px;
-}
-
-.meter-head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  margin-bottom: 12px;
-}
-
-.meter-head span {
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.meter-head b {
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.045em;
-  color: var(--ink);
-  line-height: 1;
-}
-
-.meter-track {
-  height: 10px;
-  border-radius: 999px;
-  background: var(--meter-track);
-  overflow: hidden;
-}
-
-.meter-fill {
-  display: block;
-  height: 100%;
-  border-radius: 0 4px 4px 0;
-  background: var(--series-1);
-}
-
-/* Bar chart ------------------------------------------------------------- */
-
-.bar-chart {
-  --label-w: 132px;
-  --value-w: 30px;
-  --col-gap: 12px;
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--label-w) minmax(0, 1fr) var(--value-w);
-  align-items: center;
-  row-gap: 4px;
-  column-gap: var(--col-gap);
-}
-
-/* Absolute so it never competes with the rows for a grid slot. */
-.bar-grid {
+/* Glossy cap, so the bubbles read as spheres rather than flat discs. */
+.bubble::after {
+  content: "";
   position: absolute;
-  top: 0;
-  bottom: 26px;
-  left: calc(var(--label-w) + var(--col-gap));
-  right: calc(var(--value-w) + var(--col-gap));
+  inset: 7% 14% 58% 14%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), transparent);
   pointer-events: none;
 }
 
-.bar-grid i {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--chart-grid);
-}
-
-.bar-row {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
-  align-items: center;
-  min-height: 34px;
-  border-radius: 8px;
-}
-
-.bar-label {
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-
-.bar-plot {
+.bubble svg {
   position: relative;
-  display: block;
-  height: 20px;
+  z-index: 1;
+  width: 40%;
+  height: 40%;
 }
 
-.bar {
-  display: block;
-  height: 100%;
-  border-radius: 0 4px 4px 0;
-  background: var(--series-1);
-}
-
-.bar-value {
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: var(--ink);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.bar-axis {
-  position: relative;
-  grid-column: 2;
-  height: 18px;
-  margin-top: 6px;
-}
-
-.bar-axis span {
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-  font-size: 0.63rem;
-  font-weight: 600;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Stacked bar ----------------------------------------------------------- */
-
-.stack-bar {
-  display: flex;
-  gap: 2px;
-  height: 22px;
-  margin-top: 4px;
-}
-
-.stack-seg {
-  position: relative;
-  flex: 0 0 auto;
-  border-radius: 2px;
-  display: grid;
-  place-items: center;
-}
-
-.stack-seg:first-child {
-  border-radius: 4px 2px 2px 4px;
-}
-
-.stack-seg:last-child {
-  border-radius: 2px 4px 4px 2px;
-}
-
-.stack-seg b {
-  font-size: 0.66rem;
-  font-weight: 800;
-  color: #fff;
-  font-variant-numeric: tabular-nums;
-}
-
-.chart-legend {
-  display: grid;
-  gap: 11px;
-  margin-top: 4px;
-}
-
-.chart-legend li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.78rem;
-  color: var(--ink-soft);
-}
-
-.chart-legend i {
-  width: 12px;
-  height: 12px;
-  border-radius: 4px;
-  flex: 0 0 auto;
-}
-
-.chart-legend b {
-  margin-left: auto;
-  font-weight: 800;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Hover / focus layer --------------------------------------------------- */
-
-/* `display: none` rather than `opacity: 0` — a nowrap tooltip parked inside a
-   narrow segment would otherwise widen the document. */
-.chart-tip {
-  display: none;
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 10px);
-  transform: translateX(-50%);
-  white-space: nowrap;
-  padding: 7px 11px;
-  border-radius: 10px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #fff;
-  background: rgba(10, 21, 51, 0.94);
-  box-shadow: 0 14px 30px -14px rgba(10, 45, 120, 0.8);
-  pointer-events: none;
-  z-index: 4;
-}
-
-.bar-row:hover .chart-tip,
-.bar-row:focus-visible .chart-tip,
-.stack-seg:hover .chart-tip,
-.stack-seg:focus-visible .chart-tip {
-  display: block;
-  animation: tip-in 0.18s var(--ease) both;
-}
-
-@keyframes tip-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 5px);
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bubble {
+    background: rgba(255, 255, 255, 0.94);
   }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-.bar-row:hover,
-.bar-row:focus-visible {
-  background: rgba(10, 92, 255, 0.05);
-}
-
-/* Table view ------------------------------------------------------------ */
-
-.chart-tables {
-  margin-top: 16px;
-}
-
-.chart-tables summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--electric-text);
-  padding: 10px 4px;
-}
-
-.chart-tables-inner {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-  margin-top: 12px;
-  overflow-x: auto;
-}
-
-.chart-tables table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.76rem;
-}
-
-.chart-tables caption {
-  text-align: left;
-  font-weight: 800;
-  color: var(--ink);
-  padding-bottom: 8px;
-}
-
-.chart-tables th,
-.chart-tables td {
-  text-align: left;
-  padding: 7px 10px;
-  border-bottom: 1px solid var(--hairline);
-  font-weight: 500;
-  color: var(--ink-soft);
-}
-
-.chart-tables thead th {
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 800;
-}
-
-.chart-tables td {
-  text-align: right;
-  font-weight: 800;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1735,14 +1333,15 @@ a.profile-row:hover {
   line-height: 1;
 }
 
-.price-note {
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin-top: 10px;
+.price-sub {
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: var(--electric-text);
+  margin-top: 9px;
 }
 
-.price-featured .price-note {
-  color: rgba(255, 255, 255, 0.82);
+.price-featured .price-sub {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .price-features {
@@ -1920,6 +1519,7 @@ a.profile-row:hover {
 
 .value-item {
   display: flex;
+  align-items: center;
   gap: 15px;
   padding: 20px 22px;
   border-radius: var(--radius-md);
@@ -1935,17 +1535,10 @@ a.profile-row:hover {
   height: 22px;
   color: var(--electric);
   flex: 0 0 auto;
-  margin-top: 3px;
 }
 
 .value-item h3 {
-  font-size: 0.98rem;
-  margin-bottom: 6px;
-}
-
-.value-item p {
-  font-size: 0.82rem;
-  color: var(--muted);
+  font-size: 0.96rem;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1968,12 +1561,6 @@ a.profile-row:hover {
 .contact-panel h2 em {
   font-style: normal;
   color: var(--electric);
-}
-
-.contact-panel > p {
-  color: var(--muted);
-  margin: 20px auto 0;
-  max-width: 52ch;
 }
 
 .contact-cards {
@@ -2063,13 +1650,6 @@ a.profile-row:hover {
   justify-content: space-between;
 }
 
-.footer-tagline {
-  font-size: 0.85rem;
-  color: var(--muted);
-  max-width: 34ch;
-  margin-top: 12px;
-}
-
 .footer-social {
   display: flex;
   gap: 9px;
@@ -2143,13 +1723,12 @@ a.profile-row:hover {
   .profile-grid,
   .work-card,
   .about-grid,
-  .section-head,
-  .chart-grid {
+  .section-head {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .stack-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .bubble-field {
+    --bubble-scale: 0.74;
   }
 
   .section-head {
@@ -2186,24 +1765,9 @@ a.profile-row:hover {
     padding: 9px 15px 9px 12px;
   }
 
-  .stack-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .meter-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-  }
-
-  .bar-chart {
-    --label-w: 92px;
-    --value-w: 26px;
-    --col-gap: 8px;
-  }
-
-  .bar-label,
-  .bar-value {
-    font-size: 0.7rem;
+  .bubble-field {
+    --bubble-scale: 0.6;
+    height: clamp(300px, 78vw, 360px);
   }
 
   .float-a,
@@ -2255,15 +1819,8 @@ a.profile-row:hover {
 
   .aurora,
   .orbit-ring,
-  .leaf,
-  .leaf-sway,
-  .leaf-spin,
   .status-dot::after {
     animation: none !important;
-  }
-
-  .leaf-field {
-    display: none;
   }
 
   *,
