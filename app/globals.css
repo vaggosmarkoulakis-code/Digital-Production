@@ -939,31 +939,20 @@ section {
 
 /* --------------------------------------------------------------------- */
 /* Profile band                                                           */
-/* --------------------------------------------------------------------- */
 
-.profile-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(32px, 5vw, 66px);
-  align-items: center;
-}
-
-.profile-title {
-  font-size: clamp(1.9rem, 3.6vw, 3rem);
-  margin-top: 18px;
-}
-
-.profile-title em {
-  font-style: normal;
-  color: var(--electric);
-}
-
+/* The hero is centred, so the row is too — and capped, or two tiles stretch
+   the full width of a desktop and read as a banner rather than a pair of
+   facts. Still the containing block for the note, which anchors to the whole
+   row so it can never hang off the side of one narrow tile. */
 .hero-stats {
   position: relative;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
   margin-top: 32px;
+  width: min(100%, 460px);
+  margin-inline: auto;
 }
 
 .stat-tile {
@@ -974,7 +963,9 @@ section {
 
 .stat-tile b {
   display: block;
-  font-size: 1.55rem;
+  /* Scales down on a narrow screen: "2 εβδομάδες" is a lot wider than the
+     "≤ 2 εβδ." that used to sit here, and at a fixed size it wrapped. */
+  font-size: clamp(1.1rem, 4.4vw, 1.55rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   color: var(--ink);
@@ -1060,132 +1051,6 @@ section {
   color: var(--muted);
 }
 
-/* Hero glass stack ------------------------------------------------------ */
-
-.hero-visual {
-  position: relative;
-  min-height: clamp(400px, 46vw, 540px);
-  padding-block: 26px;
-  display: grid;
-  align-items: center;
-  justify-items: end;
-}
-
-.orbit-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px dashed rgba(10, 92, 255, 0.22);
-  animation: spin 34s linear infinite;
-}
-
-.orbit-ring.r1 {
-  inset: 4%;
-}
-
-.orbit-ring.r2 {
-  inset: 17%;
-  border-style: solid;
-  border-color: rgba(10, 92, 255, 0.12);
-  animation-duration: 24s;
-  animation-direction: reverse;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.profile-card {
-  position: relative;
-  z-index: 2;
-  width: min(100%, 372px);
-  padding: 26px;
-  overflow: hidden;
-}
-
-.profile-top {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.avatar-mark {
-  width: 60px;
-  height: 60px;
-  border-radius: 19px;
-  overflow: hidden;
-  flex: 0 0 auto;
-  box-shadow: 0 14px 30px -14px rgba(10, 45, 120, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-}
-
-.avatar-mark img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-top h3 {
-  font-size: 1.08rem;
-  letter-spacing: -0.02em;
-}
-
-.profile-top p {
-  font-size: 0.74rem;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-.profile-rows {
-  margin-top: 22px;
-  display: grid;
-  gap: 10px;
-}
-
-.profile-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--ink);
-  transition: transform 0.3s var(--ease), background 0.3s ease;
-}
-
-a.profile-row:hover {
-  transform: translateX(4px);
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.profile-row svg {
-  width: 17px;
-  height: 17px;
-  color: var(--electric);
-  flex: 0 0 auto;
-}
-
-.profile-row small {
-  display: block;
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-
-.profile-row .row-end {
-  margin-left: auto;
-  color: var(--electric);
-  width: 16px;
-  height: 16px;
-}
-
 .profile-skills {
   margin-top: 20px;
   padding-top: 18px;
@@ -1206,133 +1071,11 @@ a.profile-row:hover {
   border: 1px solid rgba(10, 92, 255, 0.16);
 }
 
-.float-card {
-  position: absolute;
-  z-index: 3;
-  padding: 13px 16px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--ink);
-  white-space: nowrap;
-  animation: card-float var(--float-dur) var(--float-delay, 0s) infinite ease-in-out;
-}
-
-@keyframes card-float {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  50% {
-    translate: 0 var(--float-y);
-  }
-}
-
-.float-card svg {
-  width: 18px;
-  height: 18px;
-  color: var(--electric);
-}
-
-.float-card small {
-  display: block;
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 700;
-}
-
-/* Floating chips live in the free column to the left of the card, so they
-   never sit on top of the profile copy. */
-.float-a {
-  top: 0;
-  left: 0;
-  --float-y: -12px;
-  --float-dur: 6s;
-}
-
-.float-c {
-  top: 44%;
-  left: -3%;
-  --float-y: -9px;
-  --float-dur: 5.4s;
-  --float-delay: 1.2s;
-}
-
-.float-b {
-  bottom: 0;
-  left: 6%;
-  --float-y: 14px;
-  --float-dur: 7s;
-  --float-delay: 0.6s;
-}
-
 /* --------------------------------------------------------------------- */
 /* Stack bubbles — icons only, no labels                                  */
-/* --------------------------------------------------------------------- */
-
-.bubble-field {
-  --bubble-scale: 1;
-  position: relative;
-  height: clamp(330px, 38vw, 460px);
-  margin-top: clamp(18px, 2.5vw, 34px);
-}
-
-/* Two wirings are in the markup — one laid out landscape, one as a column for
-   the phone. Only one is ever shown; the other is display:none, so it costs
-   nothing to lay out or paint. */
-.bubble-wiring {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
 
 .bubble-wiring--tall {
   display: none;
-}
-
-.bubble-links {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.9;
-}
-
-/* Current in the wiring. The mask is the wiring itself, painted once; the band
-   underneath is the only thing that moves, and it moves on a transform, so the
-   compositor carries it and nothing re-rasterises. */
-.bubble-current {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  mask-size: 100% 100%;
-  -webkit-mask-size: 100% 100%;
-  mask-repeat: no-repeat;
-  -webkit-mask-repeat: no-repeat;
-  pointer-events: none;
-}
-
-.bubble-current-band {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 34%;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(10, 92, 255, 0.16) 22%,
-    var(--electric) 50%,
-    rgba(10, 92, 255, 0.16) 78%,
-    transparent
-  );
-  animation: current-sweep 5.5s linear infinite;
-  will-change: transform;
 }
 
 @keyframes current-sweep {
@@ -1344,82 +1087,8 @@ a.profile-row:hover {
   }
 }
 
-.bubble-joint {
-  position: absolute;
-  z-index: 0;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
-  border-radius: 50%;
-  background: var(--circuit-surface);
-  border: 2px solid var(--circuit-pad);
-}
-
-.bubble {
-  position: absolute;
-  z-index: 1;
-  left: var(--x);
-  top: var(--y);
-  width: calc(var(--size) * var(--bubble-scale) * 1px);
-  height: calc(var(--size) * var(--bubble-scale) * 1px);
-  margin-left: calc(var(--size) * var(--bubble-scale) * -0.5px);
-  margin-top: calc(var(--size) * var(--bubble-scale) * -0.5px);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--electric);
-  background: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.9),
-    rgba(255, 255, 255, 0.52)
-  );
-  backdrop-filter: blur(20px) saturate(185%);
-  -webkit-backdrop-filter: blur(20px) saturate(185%);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 24px 46px -20px rgba(10, 45, 120, 0.55),
-    inset 0 2px 0 rgba(255, 255, 255, 0.95);
-  animation: bubble-float var(--float-dur) var(--float-delay) infinite ease-in-out;
-  /* `translate` and `scale` are separate properties, so the drift below and the
-     hover lift compose instead of overwriting one another — and both stay on
-     the compositor, which a combined `transform` would not. */
-  transition: scale 0.35s var(--ease);
-}
-
-@keyframes bubble-float {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  50% {
-    translate: var(--float-x) -9px;
-  }
-}
-
-.bubble:hover {
-  scale: 1.08;
-}
-
-/* Glossy cap, so the bubbles read as spheres rather than flat discs. */
-.bubble::after {
-  content: "";
-  position: absolute;
-  inset: 7% 14% 58% 14%;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), transparent);
-  pointer-events: none;
-}
-
-.bubble svg {
-  position: relative;
-  z-index: 1;
-  width: 40%;
-  height: 40%;
-}
-
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .bubble {
-    background: rgba(255, 255, 255, 0.94);
-  }
+  
 }
 
 /* --------------------------------------------------------------------- */
@@ -2109,18 +1778,13 @@ a.profile-row:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .bubble-field {
-    --bubble-scale: 0.74;
-  }
+  
 
   .section-head {
     align-items: start;
   }
 
-  .hero-visual {
-    min-height: 420px;
-    justify-items: center;
-  }
+  
 }
 
 @media (max-width: 720px) {
@@ -2157,13 +1821,7 @@ a.profile-row:hover {
     padding: 9px 15px 9px 12px;
   }
 
-  /* The phone gets the column wiring and a field tall enough to hold it. The
-     old square-ish field had the landscape layout crushed into it: bubbles
-     touching, traces bent into unreadable diagonals. */
-  .bubble-field {
-    --bubble-scale: 0.6;
-    height: clamp(420px, 120vw, 520px);
-  }
+  
 
   .bubble-wiring--wide {
     display: none;
@@ -2173,25 +1831,16 @@ a.profile-row:hover {
     display: block;
   }
 
-  .bubble {
-    left: var(--mx);
-    top: var(--my);
-  }
+  
 
   .float-a,
   .float-b,
   .float-c,
-  .orbit-ring {
-    display: none;
-  }
+  
 
-  .profile-card {
-    width: 100%;
-  }
+  
 
-  .work-phone {
-    display: none;
-  }
+  
 
   .contact-panel {
     padding: 26px 18px;
@@ -2229,9 +1878,7 @@ a.profile-row:hover {
   .orbit-ring,
   .status-dot::after,
   .bubble,
-  .float-card {
-    animation: none !important;
-  }
+  
 
   /* A band frozen mid-sweep would leave a stripe of light sitting on the
      copper, so the current is taken off the board entirely. */

@@ -37,15 +37,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Markoulakis Digital Studio | Βαγγέλης Μαρκουλάκης",
   description:
-    "Portfolio του Βαγγέλη Μαρκουλάκη. Σχεδιάζω και αναπτύσσω σύγχρονες ιστοσελίδες, e-shops, mobile εφαρμογές και ψηφιακά εργαλεία για φιλόδοξες επιχειρήσεις.",
+    "Φτιάχνω ιστοσελίδες που φέρνουν κόσμο στην επιχείρησή σας. Σελίδες παρουσίασης, ηλεκτρονικά καταστήματα, κρατήσεις και εφαρμογές για κινητό — από 300€.",
   keywords: [
-    "web developer",
-    "ιστοσελίδες",
-    "e-shop",
-    "Next.js",
-    "React",
-    "UI UX design",
-    "mobile apps",
+    "κατασκευή ιστοσελίδων",
+    "ιστοσελίδα για επιχείρηση",
+    "ηλεκτρονικό κατάστημα",
+    "online κρατήσεις",
+    "εφαρμογή για κινητό",
+    "προώθηση στη Google",
     "Βαγγέλης Μαρκουλάκης",
   ],
   authors: [{ name: "Βαγγέλης Μαρκουλάκης" }],
@@ -53,7 +52,7 @@ export const metadata: Metadata = {
     type: "website",
     title: "Markoulakis Digital Studio | Βαγγέλης Μαρκουλάκης",
     description:
-      "Σύγχρονες ιστοσελίδες, e-shops και ψηφιακά προϊόντα με καθαρό design και τεχνολογία που αντέχει στον χρόνο.",
+      "Ιστοσελίδες που ανοίγουν γρήγορα, δείχνουν ωραία και σας βρίσκει ο κόσμος στη Google.",
     locale: "el_GR",
     images: [
       {
@@ -68,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Markoulakis Digital Studio",
     description:
-      "Σύγχρονες ιστοσελίδες, e-shops και ψηφιακά προϊόντα με καθαρό design.",
+      "Ιστοσελίδες που ανοίγουν γρήγορα, δείχνουν ωραία και σας βρίσκει ο κόσμος στη Google.",
     images: ["/og-image.jpg"],
   },
   icons: {
