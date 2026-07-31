@@ -3,13 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import {
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-} from "framer-motion";
+import { motion, useMotionValue, useScroll, useSpring } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowDown,
@@ -37,6 +31,7 @@ import {
   Zap,
 } from "lucide-react";
 import CircuitBoard from "./circuit";
+import { useMotionOff } from "./use-motion-off";
 import StackBubbles from "./stack-bubbles";
 
 /* ------------------------------------------------------------------ */
@@ -231,12 +226,12 @@ function GlassCard({
   delay?: number;
   spotlight?: boolean;
 }) {
-  const reduced = useReducedMotion();
+  const still = useMotionOff();
   return (
     <motion.div
       className={`glass ${spotlight ? "spotlight" : ""} ${className}`}
       onMouseMove={spotlight ? setSpotlight : undefined}
-      initial={reduced ? false : { opacity: 0, y: 28 }}
+      initial={still ? false : { opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
@@ -255,11 +250,11 @@ function Reveal({
   className?: string;
   delay?: number;
 }) {
-  const reduced = useReducedMotion();
+  const still = useMotionOff();
   return (
     <motion.div
       className={className}
-      initial={reduced ? false : { opacity: 0, y: 24 }}
+      initial={still ? false : { opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}
       transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
@@ -280,7 +275,7 @@ function MagneticLink({
   children: React.ReactNode;
   external?: boolean;
 }) {
-  const reduced = useReducedMotion();
+  const still = useMotionOff();
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   return (
     <motion.a
@@ -291,7 +286,7 @@ function MagneticLink({
       animate={offset}
       transition={{ type: "spring", stiffness: 250, damping: 18 }}
       onMouseMove={(event) => {
-        if (reduced) return;
+        if (still) return;
         const rect = event.currentTarget.getBoundingClientRect();
         setOffset({
           x: (event.clientX - rect.left - rect.width / 2) * 0.16,
@@ -306,14 +301,14 @@ function MagneticLink({
 }
 
 function CursorGlow() {
-  const reduced = useReducedMotion();
+  const still = useMotionOff();
   const x = useMotionValue(-500);
   const y = useMotionValue(-500);
   const sx = useSpring(x, { stiffness: 120, damping: 22, mass: 0.4 });
   const sy = useSpring(y, { stiffness: 120, damping: 22, mass: 0.4 });
 
   useEffect(() => {
-    if (reduced) return;
+    if (still) return;
     if (window.matchMedia("(hover: none)").matches) return;
     const move = (event: globalThis.MouseEvent) => {
       x.set(event.clientX);
@@ -321,9 +316,9 @@ function CursorGlow() {
     };
     window.addEventListener("mousemove", move, { passive: true });
     return () => window.removeEventListener("mousemove", move);
-  }, [reduced, x, y]);
+  }, [still, x, y]);
 
-  if (reduced) return null;
+  if (still) return null;
   return <motion.div className="cursor-glow" style={{ x: sx, y: sy }} aria-hidden="true" />;
 }
 

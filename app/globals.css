@@ -199,7 +199,18 @@ ul {
   position: fixed;
   inset: 0;
   z-index: -1;
+  overflow: hidden;
   pointer-events: none;
+}
+
+/* Twice the viewport, so a full page scroll travels one screen down it. */
+.circuit-travel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200vh;
+  will-change: transform;
 }
 
 .circuit-field svg {

@@ -5,7 +5,8 @@
  * Names live in aria-label/title so the field still reads to assistive tech.
  */
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useMotionOff } from "./use-motion-off";
 import {
   CssIcon,
   FigmaIcon,
@@ -46,7 +47,7 @@ const bubbles: Array<{
 ];
 
 export default function StackBubbles() {
-  const reduced = useReducedMotion();
+  const still = useMotionOff();
   return (
     <div className="bubble-field">
       {bubbles.map((bubble) => (
@@ -64,7 +65,7 @@ export default function StackBubbles() {
             } as React.CSSProperties
           }
           animate={
-            reduced ? undefined : { y: [0, -18, 0], x: [0, bubble.drift, 0] }
+            still ? undefined : { y: [0, -18, 0], x: [0, bubble.drift, 0] }
           }
           transition={{
             duration: bubble.dur,

@@ -1,106 +1,135 @@
 "use client";
 
 /**
- * Scroll-drawn circuit board.
+ * Travelling circuit board.
  *
- * A fixed board sits behind the glass and draws itself as the page scrolls:
- * every trace owns a slice of the scroll progress, the slices overlap, and the
- * last one closes right at the foot of the page — so reaching the bottom means
- * arriving at a finished board.
+ * The board is twice the height of the viewport and pans upward as the page
+ * scrolls, so you move across it rather than watching one fixed frame. Each
+ * trace draws itself in the window where it enters view — the fill follows the
+ * camera — and the last one closes at the foot of the page, so arriving at the
+ * bottom means arriving at a finished board.
  */
 
 import {
   motion,
-  useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion";
+import { useMotionOff } from "./use-motion-off";
 
-/* Traces laid out on a 1440 x 900 board, drawn with 45° elbows. */
+const BOARD_W = 1440;
+const BOARD_H = 1800;
+
+type Chip = { x: number; y: number; w: number; h: number; rx: number };
+
+const chips: Chip[] = [
+  { x: 580, y: 420, w: 280, h: 210, rx: 14 },
+  { x: 150, y: 120, w: 140, h: 100, rx: 9 },
+  { x: 1080, y: 960, w: 190, h: 140, rx: 11 },
+  { x: 250, y: 1380, w: 160, h: 115, rx: 9 },
+  { x: 860, y: 1540, w: 210, h: 150, rx: 12 },
+];
+
+/* Traces, drawn with 45° elbows. Order does not matter — each one takes its
+   scroll window from where it starts on the board. */
 const traces = [
-  "M650 350 L650 275 L575 200 L575 45 L300 45",
-  "M700 350 L700 250 L775 175 L775 -20",
-  "M750 350 L750 300 L905 300 L980 225 L1460 225",
-  "M800 350 L800 320 L1045 320 L1120 245 L1120 -20",
-  "M850 400 L960 400 L1035 475 L1460 475",
-  "M850 450 L1000 450 L1075 375 L1305 375 L1380 450 L1460 450",
-  "M850 500 L945 500 L1020 575 L1130 575",
-  "M850 530 L890 530 L965 605 L1130 605",
-  "M590 400 L480 400 L405 325 L405 165 L300 165",
-  "M590 450 L430 450 L355 375 L-20 375",
-  "M590 500 L450 500 L375 575 L130 575 L55 650 L55 940",
-  "M590 530 L505 530 L430 605 L185 605 L110 680 L-20 680",
-  "M650 550 L650 645 L565 730 L565 940",
-  "M700 550 L700 685 L385 685 L310 760 L310 940",
-  "M750 550 L750 625 L905 625 L980 700 L980 940",
-  "M800 550 L800 605 L1065 605 L1140 680 L1140 940",
-  "M235 205 L235 265 L175 325 L-20 325",
-  "M1205 720 L1205 800 L1280 875 L1460 875",
+  "M290 150 L420 150 L495 225 L495 420",
+  "M290 190 L360 190 L435 265 L1000 265 L1075 190 L1460 190",
+  "M220 220 L220 300 L145 375 L145 700 L60 785 L60 1180",
+  "M260 220 L260 330 L335 405 L335 640 L260 715 L-20 715",
+  "M640 406 L640 350 L565 275 L565 60 L300 60",
+  "M700 406 L700 320 L775 245 L775 -20",
+  "M760 406 L760 300 L905 300 L980 225 L1180 225 L1255 150 L1255 -20",
+  "M820 406 L820 340 L1090 340 L1165 265 L1460 265",
+  "M874 470 L1000 470 L1075 545 L1460 545",
+  "M874 520 L960 520 L1035 595 L1250 595 L1325 670 L1460 670",
+  "M874 570 L940 570 L1015 645 L1015 900 L1090 975",
+  "M566 470 L470 470 L395 545 L200 545 L125 620 L-20 620",
+  "M566 520 L440 520 L365 595 L365 860 L290 935 L-20 935",
+  "M566 570 L490 570 L415 645 L415 1000 L340 1075 L340 1380",
+  "M640 644 L640 780 L565 855 L565 1180 L640 1255 L640 1540",
+  "M700 644 L700 830 L775 905 L775 1400 L700 1475 L700 1540",
+  "M760 644 L760 720 L905 720 L980 795 L980 1540",
+  "M820 644 L820 690 L1010 690 L1085 765 L1085 960",
+  "M-20 1050 L200 1050 L275 1125 L275 1300",
+  "M1460 830 L1320 830 L1245 905 L1245 1130 L1170 1205 L1170 1400",
+  "M1270 1000 L1360 1000 L1435 1075 L1460 1075",
+  "M1270 1060 L1330 1060 L1405 1135 L1405 1420 L1460 1420",
+  "M1175 1100 L1175 1250 L1100 1325 L1100 1540",
+  "M1080 1040 L1000 1040 L925 1115 L925 1300 L850 1375 L560 1375",
+  "M410 1420 L560 1420 L635 1495 L635 1820",
+  "M410 1470 L500 1470 L575 1545 L575 1700 L500 1775 L-20 1775",
+  "M250 1495 L180 1495 L105 1570 L105 1820",
+  "M330 1495 L330 1600 L255 1675 L255 1820",
+  "M1070 1580 L1200 1580 L1275 1655 L1275 1820",
+  "M1070 1640 L1150 1640 L1225 1715 L1460 1715",
+  "M900 1690 L900 1760 L825 1820",
+  "M1000 1690 L1000 1745 L1075 1820",
 ];
 
-/* Solder pads and vias, in the order they should light up. */
-const pads: Array<[number, number, number]> = [
-  [575, 200, 5],
-  [300, 45, 6],
-  [775, 175, 5],
-  [905, 300, 5],
-  [1045, 320, 5],
-  [405, 325, 5],
-  [355, 375, 6],
-  [1035, 475, 5],
-  [1075, 375, 5],
-  [300, 165, 6],
-  [1020, 575, 5],
-  [1130, 575, 6],
-  [375, 575, 5],
-  [430, 605, 5],
-  [175, 325, 5],
-  [905, 625, 5],
-  [1065, 605, 5],
-  [565, 730, 5],
-  [385, 685, 5],
-  [55, 650, 5],
-  [110, 680, 5],
-  [1280, 875, 6],
-];
+/** Every point on a trace, so pads can only ever sit on copper. */
+function points(d: string): Array<[number, number]> {
+  const nums = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const out: Array<[number, number]> = [];
+  for (let i = 0; i + 1 < nums.length; i += 2) out.push([nums[i], nums[i + 1]]);
+  return out;
+}
 
-const chips: Array<{ x: number; y: number; w: number; h: number; rx: number }> = [
-  { x: 590, y: 350, w: 260, h: 200, rx: 12 },
-  { x: 170, y: 110, w: 130, h: 95, rx: 9 },
-  { x: 1130, y: 610, w: 150, h: 110, rx: 9 },
-];
+const onBoard = ([x, y]: [number, number]) =>
+  x > 14 && x < BOARD_W - 14 && y > 14 && y < BOARD_H - 14;
 
-/** Chip pin stubs, so the packages read as components rather than boxes. */
-const pins = [
-  ...[650, 700, 750, 800].flatMap((x) => [
-    `M${x} 336 L${x} 350`,
-    `M${x} 550 L${x} 564`,
-  ]),
-  ...[400, 450, 500].flatMap((y) => [
-    `M576 ${y} L590 ${y}`,
-    `M850 ${y} L864 ${y}`,
-  ]),
-];
+/* One pad at each trace's end, one at a mid elbow — both snapped to the path. */
+const pads: Array<[number, number, number]> = traces.flatMap((d) => {
+  const pts = points(d);
+  const picks: Array<[number, number]> = [];
+  const last = pts[pts.length - 1];
+  if (last && onBoard(last)) picks.push(last);
+  const mid = pts[Math.floor(pts.length / 2)];
+  if (mid && onBoard(mid)) picks.push(mid);
+  return picks.map(([x, y]) => [x, y, 5.5] as [number, number, number]);
+});
 
-const TOTAL = traces.length;
+/** Pin stubs for a package, as one path so the whole comb draws as a unit. */
+function chipPins(chip: Chip) {
+  const stub = 14;
+  const parts: string[] = [];
+  const across = Math.max(2, Math.round(chip.w / 70));
+  for (let i = 1; i <= across; i += 1) {
+    const x = chip.x + (chip.w * i) / (across + 1);
+    parts.push(`M${x} ${chip.y - stub} L${x} ${chip.y}`);
+    parts.push(`M${x} ${chip.y + chip.h} L${x} ${chip.y + chip.h + stub}`);
+  }
+  const down = Math.max(2, Math.round(chip.h / 62));
+  for (let i = 1; i <= down; i += 1) {
+    const y = chip.y + (chip.h * i) / (down + 1);
+    parts.push(`M${chip.x - stub} ${y} L${chip.x} ${y}`);
+    parts.push(`M${chip.x + chip.w} ${y} L${chip.x + chip.w + stub} ${y}`);
+  }
+  return parts.join(" ");
+}
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+/** Board y -> the scroll window where that row is on screen. */
+const windowFor = (y: number) => {
+  const start = clamp((y - 120) / 1560, 0, 0.78);
+  return [start, start + 0.13] as const;
+};
 
 function Trace({
   d,
   progress,
-  index,
-  count,
   width = 1.6,
 }: {
   d: string;
   progress: MotionValue<number>;
-  index: number;
-  count: number;
   width?: number;
 }) {
-  const start = (index / count) * 0.74;
-  const pathLength = useTransform(progress, [start, Math.min(1, start + 0.34)], [0, 1]);
+  const [start, end] = windowFor(points(d)[0]?.[1] ?? 0);
+  const pathLength = useTransform(progress, [start, end], [0, 1]);
   return (
     <motion.path
       d={d}
@@ -119,18 +148,15 @@ function Pad({
   cy,
   r,
   progress,
-  index,
-  count,
 }: {
   cx: number;
   cy: number;
   r: number;
   progress: MotionValue<number>;
-  index: number;
-  count: number;
 }) {
-  const at = (index / count) * 0.78 + 0.06;
-  const opacity = useTransform(progress, [at - 0.03, at + 0.03], [0, 1]);
+  const [start] = windowFor(cy);
+  const at = start + 0.1;
+  const opacity = useTransform(progress, [at - 0.04, at + 0.03], [0, 1]);
   return (
     <motion.circle
       cx={cx}
@@ -144,18 +170,10 @@ function Pad({
   );
 }
 
-function Chip({
-  chip,
-  progress,
-  index,
-}: {
-  chip: (typeof chips)[number];
-  progress: MotionValue<number>;
-  index: number;
-}) {
-  const start = 0.04 + index * 0.24;
-  const pathLength = useTransform(progress, [start, start + 0.3], [0, 1]);
-  const fill = useTransform(progress, [start + 0.1, start + 0.36], [0, 1]);
+function ChipPackage({ chip, progress }: { chip: Chip; progress: MotionValue<number> }) {
+  const [start, end] = windowFor(chip.y);
+  const outline = useTransform(progress, [start, end], [0, 1]);
+  const fill = useTransform(progress, [start + 0.03, end], [0, 1]);
   return (
     <g>
       <motion.rect
@@ -167,6 +185,14 @@ function Chip({
         fill="var(--circuit-chip)"
         style={{ opacity: fill }}
       />
+      <motion.path
+        d={chipPins(chip)}
+        fill="none"
+        stroke="var(--circuit-line)"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        style={{ pathLength: outline }}
+      />
       <motion.rect
         x={chip.x}
         y={chip.y}
@@ -176,34 +202,39 @@ function Chip({
         fill="none"
         stroke="var(--circuit-pad)"
         strokeWidth="2"
-        style={{ pathLength }}
+        style={{ pathLength: outline }}
       />
     </g>
   );
 }
 
 export default function CircuitBoard() {
-  const reduced = useReducedMotion();
+  const still = useMotionOff();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, {
     stiffness: 90,
     damping: 30,
     restDelta: 0.001,
   });
+  /* The board is 200vh tall, so a full page scroll travels exactly one screen
+     down it — the camera move and the drawing stay in step. */
+  const travel = useTransform(progress, [0, 1], ["0vh", "-100vh"]);
 
-  if (reduced) {
-    /* No scroll choreography: show the finished board, quietly. */
+  if (still) {
     return (
       <div className="circuit-field is-static" aria-hidden="true">
-        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <svg viewBox={`0 0 ${BOARD_W} ${BOARD_H}`} preserveAspectRatio="xMidYMid meet">
           {chips.map((chip) => (
-            <rect key={`${chip.x}-${chip.y}`} {...chip} fill="var(--circuit-chip)" stroke="var(--circuit-pad)" strokeWidth="2" />
+            <g key={`${chip.x}-${chip.y}`}>
+              <rect {...chip} fill="var(--circuit-chip)" stroke="var(--circuit-pad)" strokeWidth="2" />
+              <path d={chipPins(chip)} fill="none" stroke="var(--circuit-line)" strokeWidth="2.2" strokeLinecap="round" />
+            </g>
           ))}
-          {[...traces, ...pins].map((d) => (
+          {traces.map((d) => (
             <path key={d} d={d} fill="none" stroke="var(--circuit-line)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           ))}
-          {pads.map(([cx, cy, r]) => (
-            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} fill="var(--circuit-surface)" stroke="var(--circuit-pad)" strokeWidth="2" />
+          {pads.map(([cx, cy, r], index) => (
+            <circle key={`${cx}-${cy}-${index}`} cx={cx} cy={cy} r={r} fill="var(--circuit-surface)" stroke="var(--circuit-pad)" strokeWidth="2" />
           ))}
         </svg>
       </div>
@@ -212,28 +243,19 @@ export default function CircuitBoard() {
 
   return (
     <div className="circuit-field" aria-hidden="true">
-      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
-        {chips.map((chip, index) => (
-          <Chip key={`${chip.x}-${chip.y}`} chip={chip} progress={progress} index={index} />
-        ))}
-        {pins.map((d, index) => (
-          <Trace key={d} d={d} progress={progress} index={index % TOTAL} count={TOTAL} width={2.2} />
-        ))}
-        {traces.map((d, index) => (
-          <Trace key={d} d={d} progress={progress} index={index} count={TOTAL} />
-        ))}
-        {pads.map(([cx, cy, r], index) => (
-          <Pad
-            key={`${cx}-${cy}`}
-            cx={cx}
-            cy={cy}
-            r={r}
-            progress={progress}
-            index={index}
-            count={pads.length}
-          />
-        ))}
-      </svg>
+      <motion.div className="circuit-travel" style={{ y: travel }}>
+        <svg viewBox={`0 0 ${BOARD_W} ${BOARD_H}`} preserveAspectRatio="xMidYMid slice">
+          {chips.map((chip) => (
+            <ChipPackage key={`${chip.x}-${chip.y}`} chip={chip} progress={progress} />
+          ))}
+          {traces.map((d) => (
+            <Trace key={d} d={d} progress={progress} />
+          ))}
+          {pads.map(([cx, cy, r], index) => (
+            <Pad key={`${cx}-${cy}-${index}`} cx={cx} cy={cy} r={r} progress={progress} />
+          ))}
+        </svg>
+      </motion.div>
     </div>
   );
 }
