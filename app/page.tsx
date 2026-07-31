@@ -40,7 +40,6 @@ import {
   Zap,
 } from "lucide-react";
 import Atmosphere from "./atmosphere";
-import { MarkLogo } from "./brand";
 import CircuitBoard from "./circuit";
 import { useMotionOff } from "./use-motion-off";
 import StackBubbles from "./stack-bubbles";
@@ -566,7 +565,7 @@ function SiteNav({ lang, onToggleLang }: { lang: Lang; onToggleLang: () => void 
       <header className={`nav-dock ${stuck ? "is-stuck" : ""}`}>
         <a className="brand" href="#top" aria-label={tr({ el: "Αρχή σελίδας", en: "Back to top" })}>
           <span className="brand-mark">
-            <MarkLogo />
+            <Image src="/logo-mark.webp" alt="" width={320} height={320} />
           </span>
           <span className="brand-text">
             <b>MARKOULAKIS</b>
@@ -1147,7 +1146,7 @@ export default function Home() {
           <div className="glass footer-inner">
             <div className="brand">
               <span className="brand-mark">
-                <MarkLogo />
+                <Image src="/logo-mark.webp" alt="" width={320} height={320} />
               </span>
               <span className="brand-text">
                 <b>MARKOULAKIS</b>
