@@ -252,22 +252,60 @@ function GlassCard({
   delay?: number;
   spotlight?: boolean;
 }) {
-  const still = useMotionOff();
   const handlers = useSpotlight();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => (ref.current ? watchForReveal(ref.current) : undefined), []);
   return (
-    <m.div
-      className={`glass ${spotlight ? "spotlight" : ""} ${className}`}
+    <div
+      ref={ref}
+      className={`glass reveal ${spotlight ? "spotlight" : ""} ${className}`}
       {...(spotlight ? handlers : {})}
-      initial={still ? false : { opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
-    </m.div>
+    </div>
   );
 }
 
+/**
+ * One observer for every reveal on the page, created on first use. Twenty
+ * separate IntersectionObservers is twenty sets of bookkeeping for a job that
+ * is identical each time.
+ */
+let revealObserver: IntersectionObserver | null = null;
+
+function watchForReveal(el: Element) {
+  if (typeof IntersectionObserver === "undefined") {
+    el.classList.add("is-in");
+    return () => {};
+  }
+  revealObserver ??= new IntersectionObserver(
+    (entries, observer) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        /* A quarter of the element, or — for anything taller than the screen,
+           which can never show a quarter of itself — simply being on screen.
+           `rootBounds` is null in a few cross-origin cases; there, showing it
+           is the safe answer. */
+        const root = entry.rootBounds?.height;
+        const tall = !root || entry.boundingClientRect.height > root * 0.6;
+        if (entry.intersectionRatio < 0.25 && !tall) continue;
+        entry.target.classList.add("is-in");
+        observer.unobserve(entry.target);
+      }
+    },
+    { threshold: [0, 0.25] }
+  );
+  revealObserver.observe(el);
+  return () => revealObserver?.unobserve(el);
+}
+
+/**
+ * The entrance. It used to be a JavaScript animation per element; during a fast
+ * scroll a dozen of them ran at once, each writing inline styles every frame,
+ * and that was most of the reason a phone stuttered. A class and a CSS
+ * transition do the same thing with one style write per element, ever.
+ */
 function Reveal({
   children,
   className = "",
@@ -277,17 +315,16 @@ function Reveal({
   className?: string;
   delay?: number;
 }) {
-  const still = useMotionOff();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => (ref.current ? watchForReveal(ref.current) : undefined), []);
   return (
-    <m.div
-      className={className}
-      initial={still ? false : { opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+    <div
+      ref={ref}
+      className={className ? `reveal ${className}` : "reveal"}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
-    </m.div>
+    </div>
   );
 }
 
@@ -853,41 +890,33 @@ export default function Home() {
                 </div>
               </SpotlightSurface>
 
-              <m.div
-                className="glass float-card float-a"
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              >
+              {/* Floated by CSS, not by JavaScript. These three are hidden
+                  below 720px, but a JS loop keeps writing to hidden elements
+                  all the same — on a phone that was three inline style writes
+                  per frame paid for something nobody could see. */}
+              <div className="glass float-card float-a">
                 <Gauge />
                 <span>
                   <small>Performance</small>
                   98 / 100
                 </span>
-              </m.div>
+              </div>
 
-              <m.div
-                className="glass float-card float-c"
-                animate={{ y: [0, -9, 0] }}
-                transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
-              >
+              <div className="glass float-card float-c">
                 <Code2 />
                 <span>
                   <small>Code</small>
                   {tr({ el: "Καθαρός & γρήγορος", en: "Clean & fast" })}
                 </span>
-              </m.div>
+              </div>
 
-              <m.div
-                className="glass float-card float-b"
-                animate={{ y: [0, 14, 0] }}
-                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-              >
+              <div className="glass float-card float-b">
                 <MonitorSmartphone />
                 <span>
                   <small>{tr({ el: "Σχεδιασμός", en: "Design" })}</small>
                   Mobile first
                 </span>
-              </m.div>
+              </div>
             </Reveal>
           </div>
         </section>

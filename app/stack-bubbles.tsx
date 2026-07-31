@@ -7,9 +7,7 @@
  * No labels; names live in aria-label/title so the field still reads out.
  */
 
-import { m } from "framer-motion";
 import { memo } from "react";
-import { useMotionOff } from "./use-motion-off";
 import {
   CssIcon,
   FigmaIcon,
@@ -107,49 +105,51 @@ function wire(pick: (node: Node) => Point, cx: number, cy: number) {
   });
 }
 
+/**
+ * The wiring, stamped out once as a mask, so a band of light can slide beneath
+ * it on a transform. The current used to be a dash chasing each path via
+ * `stroke-dashoffset`; an animating stroke property re-rasterises the whole SVG
+ * every frame, and on a phone that alone cost a third of the frames.
+ */
+function maskFor(traces: Array<{ d: string }>) {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">` +
+    `<g fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">` +
+    traces.map((t) => `<path d="${t.d}"/>`).join("") +
+    `</g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
 const wirings = [
   { modifier: "wide", traces: wire((n) => ({ x: n.x, y: n.y }), 3.5, 3.5) },
   { modifier: "tall", traces: wire((n) => ({ x: n.mx, y: n.my }), 3.5, 2.6) },
-];
+].map((w) => ({ ...w, mask: maskFor(w.traces) }));
 
 const list = Object.values(nodes);
 
 function StackBubbles() {
-  const still = useMotionOff();
   return (
     <div className="bubble-field">
-      {wirings.map(({ modifier, traces }) => (
+      {wirings.map(({ modifier, traces, mask }) => (
         <div className={`bubble-wiring bubble-wiring--${modifier}`} key={modifier} aria-hidden="true">
           <svg className="bubble-links" viewBox="0 0 100 100" preserveAspectRatio="none">
-            {traces.map((trace, index) => (
-              <g key={trace.key}>
-                <path
-                  d={trace.d}
-                  fill="none"
-                  stroke="var(--circuit-pad)"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-                {/* The charge running the same route: a short lit segment of a
-                    dash pattern normalised to the path's own length, so every
-                    trace takes the same time however long it is. Staggered by
-                    index, or the whole board would blink in unison. */}
-                <path
-                  className="bubble-charge"
-                  d={trace.d}
-                  pathLength={1}
-                  fill="none"
-                  stroke="var(--electric)"
-                  strokeWidth="1.9"
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                  style={{ animationDelay: `${(index * 0.47) % 3.2}s` }}
-                />
-              </g>
+            {traces.map((trace) => (
+              <path
+                key={trace.key}
+                d={trace.d}
+                fill="none"
+                stroke="var(--circuit-pad)"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
             ))}
           </svg>
+
+          <div className="bubble-current" style={{ maskImage: mask, WebkitMaskImage: mask }}>
+            <span className="bubble-current-band" />
+          </div>
 
           {traces.map((trace) => (
             <span
@@ -161,8 +161,14 @@ function StackBubbles() {
         </div>
       ))}
 
+      {/* The float is a CSS animation, not a JavaScript one. Twelve bubbles
+          drifting on the main thread meant twelve inline style writes every
+          frame of every scroll, on every part of the page, whether or not the
+          stack was anywhere near the viewport. As `translate` — the standalone
+          property, so the hover `scale` still composes with it — the browser
+          runs the whole thing on the compositor for nothing. */}
       {list.map((node) => (
-        <m.span
+        <span
           key={node.name}
           className="bubble"
           role="img"
@@ -175,19 +181,14 @@ function StackBubbles() {
               "--mx": `${node.mx}%`,
               "--my": `${node.my}%`,
               "--size": node.size,
+              "--float-x": `${node.drift}px`,
+              "--float-dur": `${node.dur}s`,
+              "--float-delay": `${node.delay}s`,
             } as React.CSSProperties
           }
-          animate={still ? undefined : { y: [0, -9, 0], x: [0, node.drift, 0] }}
-          transition={{
-            duration: node.dur,
-            delay: node.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          whileHover={{ scale: 1.08 }}
         >
           <node.Icon />
-        </m.span>
+        </span>
       ))}
     </div>
   );

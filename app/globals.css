@@ -343,12 +343,45 @@ ul {
   opacity: 0.72;
 }
 
-/* Current on the board's trunks. The dash pattern is normalised by the path's
-   own `pathLength="1"`, so a long trace and a short one carry the pulse at the
-   same speed and the same apparent size. */
-.circuit-charge {
-  stroke-dasharray: 0.05 0.95;
-  animation: charge-run 4.2s linear infinite;
+/* Current on the board. Same trick as the stack's wiring: the copper is the
+   mask, painted once, and the light underneath travels on a transform. The
+   mask matches the board's own `xMidYMid slice`, which is what `cover` and a
+   centred position mean for a replaced image of the same aspect ratio. */
+.circuit-current {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mask-size: cover;
+  -webkit-mask-size: cover;
+  mask-position: center;
+  -webkit-mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.circuit-current-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(10, 92, 255, 0.2) 26%,
+    var(--electric) 50%,
+    rgba(10, 92, 255, 0.2) 74%,
+    transparent
+  );
+  animation: current-sweep 9s linear infinite;
+  will-change: transform;
+}
+
+/* A second pulse, offset, so the board never looks dead for long. */
+.circuit-current-band--late {
+  animation-delay: -4.5s;
+  opacity: 0.7;
 }
 
 .cursor-glow {
@@ -368,6 +401,19 @@ ul {
 /* --------------------------------------------------------------------- */
 /* Glass primitives                                                       */
 /* --------------------------------------------------------------------- */
+
+/* The entrance. `translate` rather than `transform` so it never collides with
+   a transform the revealed element sets for itself. */
+.reveal {
+  opacity: 0;
+  translate: 0 24px;
+  transition: opacity 0.7s var(--ease), translate 0.7s var(--ease);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  translate: 0 0;
+}
 
 .glass {
   position: relative;
@@ -1172,6 +1218,17 @@ a.profile-row:hover {
   font-weight: 700;
   color: var(--ink);
   white-space: nowrap;
+  animation: card-float var(--float-dur) var(--float-delay, 0s) infinite ease-in-out;
+}
+
+@keyframes card-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 var(--float-y);
+  }
 }
 
 .float-card svg {
@@ -1194,16 +1251,24 @@ a.profile-row:hover {
 .float-a {
   top: 0;
   left: 0;
+  --float-y: -12px;
+  --float-dur: 6s;
 }
 
 .float-c {
   top: 44%;
   left: -3%;
+  --float-y: -9px;
+  --float-dur: 5.4s;
+  --float-delay: 1.2s;
 }
 
 .float-b {
   bottom: 0;
   left: 6%;
+  --float-y: 14px;
+  --float-dur: 7s;
+  --float-delay: 0.6s;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1238,23 +1303,44 @@ a.profile-row:hover {
   opacity: 0.9;
 }
 
-/* Current in the traces: one short lit dash chasing the length of each path.
-   `pathLength: 1` normalises every trace to the same scale, so the dash keeps
-   its size and speed whether the run is long or short. */
-.bubble-charge {
-  stroke-dasharray: 0.14 0.86;
-  animation: charge-run 3.2s linear infinite;
+/* Current in the wiring. The mask is the wiring itself, painted once; the band
+   underneath is the only thing that moves, and it moves on a transform, so the
+   compositor carries it and nothing re-rasterises. */
+.bubble-current {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  pointer-events: none;
 }
 
-/* One full period per cycle, so the loop has no seam. No drop-shadow glow: a
-   filter on something that repaints every frame is the one effect this page
-   cannot afford. */
-@keyframes charge-run {
+.bubble-current-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 34%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(10, 92, 255, 0.16) 22%,
+    var(--electric) 50%,
+    rgba(10, 92, 255, 0.16) 78%,
+    transparent
+  );
+  animation: current-sweep 5.5s linear infinite;
+  will-change: transform;
+}
+
+@keyframes current-sweep {
   from {
-    stroke-dashoffset: 1;
+    transform: translate3d(0, -110%, 0);
   }
   to {
-    stroke-dashoffset: 0;
+    transform: translate3d(0, 400%, 0);
   }
 }
 
@@ -1292,7 +1378,25 @@ a.profile-row:hover {
   border: 1px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 24px 46px -20px rgba(10, 45, 120, 0.55),
     inset 0 2px 0 rgba(255, 255, 255, 0.95);
-  will-change: transform;
+  animation: bubble-float var(--float-dur) var(--float-delay) infinite ease-in-out;
+  /* `translate` and `scale` are separate properties, so the drift below and the
+     hover lift compose instead of overwriting one another — and both stay on
+     the compositor, which a combined `transform` would not. */
+  transition: scale 0.35s var(--ease);
+}
+
+@keyframes bubble-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: var(--float-x) -9px;
+  }
+}
+
+.bubble:hover {
+  scale: 1.08;
 }
 
 /* Glossy cap, so the bubbles read as spheres rather than flat discs. */
@@ -2071,15 +2175,23 @@ a.profile-row:hover {
 
   .aurora,
   .orbit-ring,
-  .status-dot::after {
+  .status-dot::after,
+  .bubble,
+  .float-card {
     animation: none !important;
   }
 
-  /* Stopping the chase mid-run would leave a stray dash sitting on every
-     trace, so the current is taken off the board entirely. */
-  .bubble-charge,
-  .circuit-charge {
+  /* A band frozen mid-sweep would leave a stripe of light sitting on the
+     copper, so the current is taken off the board entirely. */
+  .bubble-current,
+  .circuit-current {
     display: none;
+  }
+
+  /* Shown outright, not transitioned in from nothing. */
+  .reveal {
+    opacity: 1;
+    translate: 0 0;
   }
 
   *,
