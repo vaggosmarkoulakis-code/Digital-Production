@@ -343,6 +343,47 @@ ul {
   opacity: 0.72;
 }
 
+/* Current on the board. Same trick as the stack's wiring: the copper is the
+   mask, painted once, and the light underneath travels on a transform. The
+   mask matches the board's own `xMidYMid slice`, which is what `cover` and a
+   centred position mean for a replaced image of the same aspect ratio. */
+.circuit-current {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mask-size: cover;
+  -webkit-mask-size: cover;
+  mask-position: center;
+  -webkit-mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.circuit-current-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(10, 92, 255, 0.2) 26%,
+    var(--electric) 50%,
+    rgba(10, 92, 255, 0.2) 74%,
+    transparent
+  );
+  animation: current-sweep 9s linear infinite;
+  will-change: transform;
+}
+
+/* A second pulse, offset, so the board never looks dead for long. */
+.circuit-current-band--late {
+  animation-delay: -4.5s;
+  opacity: 0.7;
+}
+
 .cursor-glow {
   position: fixed;
   top: 0;
@@ -360,6 +401,19 @@ ul {
 /* --------------------------------------------------------------------- */
 /* Glass primitives                                                       */
 /* --------------------------------------------------------------------- */
+
+/* The entrance. `translate` rather than `transform` so it never collides with
+   a transform the revealed element sets for itself. */
+.reveal {
+  opacity: 0;
+  translate: 0 24px;
+  transition: opacity 0.7s var(--ease), translate 0.7s var(--ease);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  translate: 0 0;
+}
 
 .glass {
   position: relative;
@@ -885,30 +939,20 @@ section {
 
 /* --------------------------------------------------------------------- */
 /* Profile band                                                           */
-/* --------------------------------------------------------------------- */
 
-.profile-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(32px, 5vw, 66px);
-  align-items: center;
-}
-
-.profile-title {
-  font-size: clamp(1.9rem, 3.6vw, 3rem);
-  margin-top: 18px;
-}
-
-.profile-title em {
-  font-style: normal;
-  color: var(--electric);
-}
-
+/* The hero is centred, so the row is too — and capped, or two tiles stretch
+   the full width of a desktop and read as a banner rather than a pair of
+   facts. Still the containing block for the note, which anchors to the whole
+   row so it can never hang off the side of one narrow tile. */
 .hero-stats {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
   margin-top: 32px;
+  width: min(100%, 460px);
+  margin-inline: auto;
 }
 
 .stat-tile {
@@ -919,15 +963,20 @@ section {
 
 .stat-tile b {
   display: block;
-  font-size: 1.55rem;
+  /* Scales down on a narrow screen: "2 εβδομάδες" is a lot wider than the
+     "≤ 2 εβδ." that used to sit here, and at a fixed size it wrapped. */
+  font-size: clamp(1.1rem, 4.4vw, 1.55rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   color: var(--ink);
   line-height: 1;
 }
 
+/* Deliberately not a containing block: the note below anchors to the whole
+   stats row instead, so its width is the row's and it cannot run off-screen
+   the way it did when it hung off one narrow tile. */
 .stat-tile-note {
-  position: relative;
+  position: static;
 }
 
 .stat-info {
@@ -956,12 +1005,22 @@ section {
 .stat-pop {
   position: absolute;
   left: 0;
+  right: 0;
   top: calc(100% + 12px);
   z-index: 8;
-  width: min(320px, 76vw);
+  max-width: 420px;
   padding: 18px 20px;
   border-radius: var(--radius-md);
   text-align: left;
+  /* Opaque, not glass. Everywhere else the material sits over a wash; here it
+     lands on top of the profile card, and at any transparency the name and the
+     logo behind read straight through the explanation. With nothing showing
+     through there is also nothing for the backdrop blur to do. */
+  background: linear-gradient(155deg, #ffffff, #f2f6ff);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 30px 60px -28px rgba(10, 45, 120, 0.55),
+    0 2px 10px -4px rgba(10, 45, 120, 0.28);
 }
 
 .stat-pop p {
@@ -992,132 +1051,6 @@ section {
   color: var(--muted);
 }
 
-/* Hero glass stack ------------------------------------------------------ */
-
-.hero-visual {
-  position: relative;
-  min-height: clamp(400px, 46vw, 540px);
-  padding-block: 26px;
-  display: grid;
-  align-items: center;
-  justify-items: end;
-}
-
-.orbit-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px dashed rgba(10, 92, 255, 0.22);
-  animation: spin 34s linear infinite;
-}
-
-.orbit-ring.r1 {
-  inset: 4%;
-}
-
-.orbit-ring.r2 {
-  inset: 17%;
-  border-style: solid;
-  border-color: rgba(10, 92, 255, 0.12);
-  animation-duration: 24s;
-  animation-direction: reverse;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.profile-card {
-  position: relative;
-  z-index: 2;
-  width: min(100%, 372px);
-  padding: 26px;
-  overflow: hidden;
-}
-
-.profile-top {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.avatar-mark {
-  width: 60px;
-  height: 60px;
-  border-radius: 19px;
-  overflow: hidden;
-  flex: 0 0 auto;
-  box-shadow: 0 14px 30px -14px rgba(10, 45, 120, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-}
-
-.avatar-mark img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-top h3 {
-  font-size: 1.08rem;
-  letter-spacing: -0.02em;
-}
-
-.profile-top p {
-  font-size: 0.74rem;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-.profile-rows {
-  margin-top: 22px;
-  display: grid;
-  gap: 10px;
-}
-
-.profile-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--ink);
-  transition: transform 0.3s var(--ease), background 0.3s ease;
-}
-
-a.profile-row:hover {
-  transform: translateX(4px);
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.profile-row svg {
-  width: 17px;
-  height: 17px;
-  color: var(--electric);
-  flex: 0 0 auto;
-}
-
-.profile-row small {
-  display: block;
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-
-.profile-row .row-end {
-  margin-left: auto;
-  color: var(--electric);
-  width: 16px;
-  height: 16px;
-}
-
 .profile-skills {
   margin-top: 20px;
   padding-top: 18px;
@@ -1138,128 +1071,24 @@ a.profile-row:hover {
   border: 1px solid rgba(10, 92, 255, 0.16);
 }
 
-.float-card {
-  position: absolute;
-  z-index: 3;
-  padding: 13px 16px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-.float-card svg {
-  width: 18px;
-  height: 18px;
-  color: var(--electric);
-}
-
-.float-card small {
-  display: block;
-  font-size: 0.58rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 700;
-}
-
-/* Floating chips live in the free column to the left of the card, so they
-   never sit on top of the profile copy. */
-.float-a {
-  top: 0;
-  left: 0;
-}
-
-.float-c {
-  top: 44%;
-  left: -3%;
-}
-
-.float-b {
-  bottom: 0;
-  left: 6%;
-}
-
 /* --------------------------------------------------------------------- */
 /* Stack bubbles — icons only, no labels                                  */
-/* --------------------------------------------------------------------- */
 
-.bubble-field {
-  --bubble-scale: 1;
-  position: relative;
-  height: clamp(330px, 38vw, 460px);
-  margin-top: clamp(18px, 2.5vw, 34px);
+.bubble-wiring--tall {
+  display: none;
 }
 
-.bubble-links {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  opacity: 0.9;
-}
-
-.bubble-joint {
-  position: absolute;
-  z-index: 0;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
-  border-radius: 50%;
-  background: var(--circuit-surface);
-  border: 2px solid var(--circuit-pad);
-}
-
-.bubble {
-  position: absolute;
-  z-index: 1;
-  width: calc(var(--size) * var(--bubble-scale) * 1px);
-  height: calc(var(--size) * var(--bubble-scale) * 1px);
-  margin-left: calc(var(--size) * var(--bubble-scale) * -0.5px);
-  margin-top: calc(var(--size) * var(--bubble-scale) * -0.5px);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--electric);
-  background: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.9),
-    rgba(255, 255, 255, 0.52)
-  );
-  backdrop-filter: blur(20px) saturate(185%);
-  -webkit-backdrop-filter: blur(20px) saturate(185%);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 24px 46px -20px rgba(10, 45, 120, 0.55),
-    inset 0 2px 0 rgba(255, 255, 255, 0.95);
-  will-change: transform;
-}
-
-/* Glossy cap, so the bubbles read as spheres rather than flat discs. */
-.bubble::after {
-  content: "";
-  position: absolute;
-  inset: 7% 14% 58% 14%;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), transparent);
-  pointer-events: none;
-}
-
-.bubble svg {
-  position: relative;
-  z-index: 1;
-  width: 40%;
-  height: 40%;
+@keyframes current-sweep {
+  from {
+    transform: translate3d(0, -110%, 0);
+  }
+  to {
+    transform: translate3d(0, 400%, 0);
+  }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .bubble {
-    background: rgba(255, 255, 255, 0.94);
-  }
+  
 }
 
 /* --------------------------------------------------------------------- */
@@ -1578,35 +1407,85 @@ a.profile-row:hover {
 /* Process                                                                */
 /* --------------------------------------------------------------------- */
 
-/* The rail slides along while the section passes, so the steps read in
-   order without the reader having to drag anything. */
-.process-rail {
+/* One line that writes each step out, holds it and moves on. Nothing scrolls,
+   nothing slides — the only thing that changes is the text in the line and the
+   icon beside it. */
+.process-typer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 26px);
+  padding: clamp(26px, 3.4vw, 44px) clamp(24px, 3.4vw, 46px);
+  border-radius: var(--radius-lg);
+}
+
+.process-line {
+  /* Held at the height of one line, so the panel never jumps as the words
+     change length. */
+  min-height: 1.25em;
+  display: flex;
+  align-items: baseline;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.6rem, 4.6vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: var(--electric-text);
+}
+
+.process-caret {
+  display: inline-block;
+  width: 3px;
+  align-self: stretch;
+  margin-left: 6px;
+  border-radius: 2px;
+  background: var(--electric);
+  animation: caret-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.process-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.process-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--circuit-pad);
+  transition: width 0.45s var(--ease), background 0.45s var(--ease);
+}
+
+.process-dots i.is-on {
+  width: 26px;
+  background: var(--electric);
+}
+
+/* The full list, for a screen reader or anyone who has asked for less motion.
+   `clip` rather than `display: none`, which would take it out of the
+   accessibility tree along with everything else. */
+.process-list {
+  grid-column: 1 / -1;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
   overflow: hidden;
-  margin-inline: calc(var(--pad-x) * -1);
-}
-
-/* The inset lives on the track, so its scrollWidth already accounts for it and
-   the measured travel lands the last card exactly inside the padding. */
-.process-track {
-  display: flex;
-  gap: 14px;
-  width: max-content;
-  padding-inline: var(--pad-x);
-  will-change: transform;
-}
-
-.process-step {
-  flex: 0 0 clamp(200px, 21vw, 264px);
-  padding: 26px;
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  transition: transform 0.4s var(--ease);
-}
-
-.process-step:hover {
-  transform: translateY(-6px);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .process-icon {
@@ -1625,8 +1504,28 @@ a.profile-row:hover {
   height: 21px;
 }
 
-.process-step h3 {
-  font-size: 1.05rem;
+/* Keyed on the step, so React swaps the node and this replays each time. */
+.process-typer .process-icon {
+  width: clamp(48px, 5.4vw, 62px);
+  height: clamp(48px, 5.4vw, 62px);
+  border-radius: 18px;
+  animation: icon-swap 0.45s var(--ease);
+}
+
+.process-typer .process-icon svg {
+  width: 45%;
+  height: 45%;
+}
+
+@keyframes icon-swap {
+  from {
+    opacity: 0;
+    scale: 0.72;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
 }
 
 /* --------------------------------------------------------------------- */
@@ -1879,18 +1778,13 @@ a.profile-row:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .bubble-field {
-    --bubble-scale: 0.74;
-  }
+  
 
   .section-head {
     align-items: start;
   }
 
-  .hero-visual {
-    min-height: 420px;
-    justify-items: center;
-  }
+  
 }
 
 @media (max-width: 720px) {
@@ -1900,6 +1794,16 @@ a.profile-row:hover {
 
   .cursor-glow {
     display: none;
+  }
+
+  /* No room for the dots beside the line on a phone, so they go under it. */
+  .process-typer {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 16px;
+  }
+
+  .process-dots {
+    grid-column: 1 / -1;
   }
 
   .hero {
@@ -1917,25 +1821,26 @@ a.profile-row:hover {
     padding: 9px 15px 9px 12px;
   }
 
-  .bubble-field {
-    --bubble-scale: 0.6;
-    height: clamp(300px, 78vw, 360px);
+  
+
+  .bubble-wiring--wide {
+    display: none;
   }
+
+  .bubble-wiring--tall {
+    display: block;
+  }
+
+  
 
   .float-a,
   .float-b,
   .float-c,
-  .orbit-ring {
-    display: none;
-  }
+  
 
-  .profile-card {
-    width: 100%;
-  }
+  
 
-  .work-phone {
-    display: none;
-  }
+  
 
   .contact-panel {
     padding: 26px 18px;
@@ -1971,8 +1876,43 @@ a.profile-row:hover {
 
   .aurora,
   .orbit-ring,
-  .status-dot::after {
-    animation: none !important;
+  .status-dot::after,
+  .bubble,
+  
+
+  /* A band frozen mid-sweep would leave a stripe of light sitting on the
+     copper, so the current is taken off the board entirely. */
+  .bubble-current,
+  .circuit-current {
+    display: none;
+  }
+
+  /* Shown outright, not transitioned in from nothing. */
+  .reveal {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  /* Nothing types itself: the panel shows the first step and then the whole
+     list, plainly. */
+  .process-caret {
+    display: none;
+  }
+
+  .process-list {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 14px 0 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
   }
 
   *,

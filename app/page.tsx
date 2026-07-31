@@ -10,7 +10,6 @@ import {
   useMotionValue,
   useScroll,
   useSpring,
-  useTransform,
 } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -22,7 +21,6 @@ import {
   Gauge,
   Globe2,
   Info,
-  GraduationCap,
   Languages,
   Layers,
   Mail,
@@ -32,7 +30,6 @@ import {
   PenTool,
   Phone,
   Rocket,
-  Search,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
@@ -42,7 +39,6 @@ import {
 import Atmosphere from "./atmosphere";
 import CircuitBoard from "./circuit";
 import { useMotionOff } from "./use-motion-off";
-import StackBubbles from "./stack-bubbles";
 
 /* ------------------------------------------------------------------ */
 /* Content                                                             */
@@ -65,54 +61,58 @@ const profile = {
 };
 
 const navLinks: Array<{ href: string; label: Copy }> = [
-  { href: "#profile", label: { el: "Προφίλ", en: "Profile" } },
-  { href: "#stack", label: { el: "Stack", en: "Stack" } },
-  { href: "#services", label: { el: "Υπηρεσίες", en: "Services" } },
-  { href: "#work", label: { el: "Έργα", en: "Work" } },
+  { href: "#services", label: { el: "Τι κάνω", en: "What I do" } },
+  { href: "#work", label: { el: "Δουλειές", en: "Work" } },
   { href: "#pricing", label: { el: "Τιμές", en: "Pricing" } },
-  { href: "#process", label: { el: "Διαδικασία", en: "Process" } },
+  { href: "#process", label: { el: "Πώς δουλεύω", en: "How it works" } },
+  { href: "#contact", label: { el: "Επικοινωνία", en: "Contact" } },
 ];
 
-const lighthouseNote: Copy = {
-  el: "Το Lighthouse είναι το εργαλείο της Google που βαθμολογεί μια σελίδα στα 100 σε ταχύτητα, προσβασιμότητα, καλές πρακτικές και SEO. Στοχεύω σε 98+ σε κάθε παράδοση.",
-  en: "Lighthouse is Google’s tool that scores a page out of 100 on speed, accessibility, best practices and SEO. I aim for 98+ on every delivery.",
+/* Named for what it measures, not for the tool that measures it — "Lighthouse"
+   means nothing to someone who has never built a website. */
+const scoreNote: Copy = {
+  el: "Η Google βαθμολογεί κάθε ιστοσελίδα στα 100: πόσο γρήγορα ανοίγει, πόσο εύκολα διαβάζεται και πόσο εύκολα σας βρίσκει ο κόσμος. Δεν παραδίδω σελίδα κάτω από 98.",
+  en: "Google scores every website out of 100: how fast it opens, how easily it reads, and how easily people find you. I don’t hand over a page below 98.",
 };
 
+/* Everything below is written for someone who has never built a website: no
+   "landing page", no "responsive", no "SEO" — what it is, in the words a
+   customer would use asking for it. */
 const services: Array<{ icon: LucideIcon; title: Copy; items: Array<Copy> }> = [
   {
     icon: Globe2,
     title: { el: "Ιστοσελίδες", en: "Websites" },
     items: [
-      { el: "Landing pages", en: "Landing pages" },
-      { el: "Επαγγελματικά websites", en: "Business websites" },
-      { el: "Redesign", en: "Redesign" },
+      { el: "Μία σελίδα με τα βασικά", en: "One page with the essentials" },
+      { el: "Σελίδα για την επιχείρησή σας", en: "A site for your business" },
+      { el: "Ανανέωση παλιάς σελίδας", en: "A refresh of an old site" },
     ],
   },
   {
     icon: ShoppingBag,
-    title: { el: "E-shop & Κρατήσεις", en: "E-commerce & bookings" },
+    title: { el: "Πωλήσεις & κρατήσεις", en: "Sales & bookings" },
     items: [
-      { el: "E-shop", en: "Online store" },
-      { el: "Online παραγγελίες", en: "Online ordering" },
-      { el: "Κρατήσεις", en: "Bookings" },
+      { el: "Πούλημα προϊόντων online", en: "Selling online" },
+      { el: "Παραγγελίες από το κινητό", en: "Orders from a phone" },
+      { el: "Ραντεβού & κρατήσεις", en: "Appointments & bookings" },
     ],
   },
   {
     icon: MonitorSmartphone,
-    title: { el: "Εφαρμογές", en: "Applications" },
+    title: { el: "Εφαρμογές", en: "Apps" },
     items: [
-      { el: "Mobile apps", en: "Mobile apps" },
-      { el: "Dashboards", en: "Dashboards" },
-      { el: "Αυτοματισμοί", en: "Automation" },
+      { el: "Εφαρμογή για κινητό", en: "An app for phones" },
+      { el: "Πίνακας με τα νούμερά σας", en: "A dashboard of your numbers" },
+      { el: "Δουλειές που γίνονται μόνες τους", en: "Jobs that run themselves" },
     ],
   },
   {
     icon: Zap,
-    title: { el: "SEO & Υποστήριξη", en: "SEO & support" },
+    title: { el: "Να σας βρίσκουν", en: "Getting found" },
     items: [
-      { el: "Google Business & SEO", en: "Google Business & SEO" },
-      { el: "Hosting & domain", en: "Hosting & domain" },
-      { el: "Συντήρηση", en: "Maintenance" },
+      { el: "Ψηλά στην αναζήτηση Google", en: "High up in Google search" },
+      { el: "Προφίλ στον χάρτη της Google", en: "A profile on Google Maps" },
+      { el: "Φιλοξενία, όνομα & συντήρηση", en: "Hosting, domain & upkeep" },
     ],
   },
 ];
@@ -125,62 +125,70 @@ const pricing: Array<{
   features: Array<Copy>;
 }> = [
   {
-    name: { el: "Landing page", en: "Landing page" },
+    name: { el: "Μία σελίδα", en: "One page" },
     price: { el: "300€", en: "€300" },
-    sub: { el: "+ 10€ / μήνα συντήρηση", en: "+ €10 / month maintenance" },
+    sub: { el: "+ 10€ τον μήνα για συντήρηση", en: "+ €10 a month to keep it running" },
     features: [
-      { el: "Μονοσέλιδη landing page", en: "Single-page landing" },
-      { el: "SEO για την επιχείρηση", en: "SEO for your business" },
-      { el: "Responsive σε κάθε συσκευή", en: "Responsive on every device" },
-      { el: "Google & social σύνδεση", en: "Google & social links" },
+      { el: "Μία σελίδα με όλα τα βασικά", en: "One page with all the essentials" },
+      { el: "Να σας βρίσκουν στη Google", en: "So people find you on Google" },
+      { el: "Σωστή εμφάνιση σε κινητό και υπολογιστή", en: "Looks right on phone and computer" },
+      { el: "Τηλέφωνο, χάρτης και social μέσα", en: "Phone, map and socials built in" },
     ],
   },
   {
-    name: { el: "Πολλαπλές σελίδες", en: "Multi-page" },
+    name: { el: "Πολλές σελίδες", en: "Several pages" },
     price: { el: "500€", en: "€500" },
-    sub: { el: "+ 15€ / μήνα συντήρηση", en: "+ €15 / month maintenance" },
+    sub: { el: "+ 15€ τον μήνα για συντήρηση", en: "+ €15 a month to keep it running" },
     featured: true,
     features: [
-      { el: "Πολλαπλές σελίδες", en: "Multiple pages" },
-      { el: "Μενού & πλοήγηση", en: "Menu & navigation" },
-      { el: "Animations", en: "Animations" },
-      { el: "Premium εμφάνιση", en: "Premium look" },
-      { el: "SEO", en: "SEO" },
+      { el: "Πολλές σελίδες", en: "Several pages" },
+      { el: "Μενού για να τις βρίσκει ο κόσμος", en: "A menu so people can find them" },
+      { el: "Κινήσεις και εφέ", en: "Movement and effects" },
+      { el: "Πιο προσεγμένη εμφάνιση", en: "A more polished look" },
+      { el: "Να σας βρίσκουν στη Google", en: "So people find you on Google" },
     ],
   },
   {
-    name: { el: "Custom", en: "Custom" },
+    name: { el: "Κάτι δικό σας", en: "Something of your own" },
     price: { el: "Συζητήσιμη", en: "Let’s talk" },
     sub: { el: "Αναλόγως τι χρειάζεστε", en: "Depending on what you need" },
     features: [
-      { el: "E-shop & κρατήσεις", en: "E-commerce & bookings" },
-      { el: "Εφαρμογές & dashboards", en: "Apps & dashboards" },
-      { el: "Αυτοματισμοί", en: "Automation" },
-      { el: "Προσφορά μετά από συζήτηση", en: "Quote after a chat" },
+      { el: "Πούλημα ή κρατήσεις online", en: "Selling or bookings online" },
+      { el: "Εφαρμογή για κινητό", en: "An app for phones" },
+      { el: "Δουλειές που γίνονται μόνες τους", en: "Jobs that run themselves" },
+      { el: "Τιμή αφού μιλήσουμε", en: "A price once we’ve talked" },
     ],
   },
 ];
 
 const processSteps: Array<{ icon: LucideIcon; title: Copy }> = [
-  { icon: MessageCircle, title: { el: "Συζήτηση", en: "Discovery" } },
-  { icon: Search, title: { el: "Ανάλυση", en: "Analysis" } },
-  { icon: PenTool, title: { el: "Σχεδιασμός", en: "Design" } },
-  { icon: Code2, title: { el: "Ανάπτυξη", en: "Development" } },
-  { icon: ShieldCheck, title: { el: "Έλεγχος", en: "Testing" } },
-  { icon: Rocket, title: { el: "Παράδοση", en: "Launch" } },
+  { icon: MessageCircle, title: { el: "Μιλάμε", en: "We talk" } },
+  { icon: PenTool, title: { el: "Σχεδιάζω", en: "I design it" } },
+  { icon: Code2, title: { el: "Φτιάχνω", en: "I build it" } },
+  { icon: ShieldCheck, title: { el: "Ελέγχω", en: "I check it" } },
+  { icon: Rocket, title: { el: "Βγαίνει στον αέρα", en: "It goes live" } },
+  { icon: Sparkles, title: { el: "Το προσέχω", en: "I look after it" } },
 ];
 
 const values: Array<{ icon: LucideIcon; title: Copy }> = [
-  { icon: GraduationCap, title: { el: "Πληροφορική στην ΑΣΟΕΕ", en: "Computer Science at AUEB" } },
-  { icon: Layers, title: { el: "Μηχανική σκέψη & design", en: "Engineering meets design" } },
   {
-    icon: Gauge,
-    title: { el: "Ταχύτητα και εμφάνιση ως χαρακτηριστικό", en: "Speed and looks as a feature" },
+    icon: Layers,
+    title: { el: "Σχέδιο και κατασκευή από τον ίδιο", en: "Designed and built by one person" },
   },
-  { icon: Sparkles, title: { el: "Λίγα projects τη φορά", en: "A few projects at a time" } },
+  { icon: Gauge, title: { el: "Ανοίγει γρήγορα και δείχνει ωραία", en: "Opens fast and looks good" } },
+  {
+    icon: MonitorSmartphone,
+    title: { el: "Σωστή σε κινητό και υπολογιστή", en: "Right on phone and computer" },
+  },
+  { icon: Sparkles, title: { el: "Λίγες δουλειές τη φορά", en: "A few jobs at a time" } },
 ];
 
-const workTags = ["Next.js", "UI/UX", "Responsive", "SEO"];
+const workTags: Array<Copy> = [
+  { el: "Ανοίγει γρήγορα", en: "Opens fast" },
+  { el: "Σε κινητό & υπολογιστή", en: "Phone & computer" },
+  { el: "Βρίσκεται στη Google", en: "Found on Google" },
+  { el: "Δικό του σχέδιο", en: "Its own design" },
+];
 
 /* ------------------------------------------------------------------ */
 /* Small building blocks                                               */
@@ -225,22 +233,6 @@ function useSpotlight() {
   return { onPointerEnter, onPointerMove };
 }
 
-/** A plain glass surface with the spotlight, for cards that reveal elsewhere. */
-function SpotlightSurface({
-  className = "",
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const spotlight = useSpotlight();
-  return (
-    <div className={`glass spotlight ${className}`} {...spotlight}>
-      {children}
-    </div>
-  );
-}
-
 function GlassCard({
   children,
   className = "",
@@ -252,22 +244,60 @@ function GlassCard({
   delay?: number;
   spotlight?: boolean;
 }) {
-  const still = useMotionOff();
   const handlers = useSpotlight();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => (ref.current ? watchForReveal(ref.current) : undefined), []);
   return (
-    <m.div
-      className={`glass ${spotlight ? "spotlight" : ""} ${className}`}
+    <div
+      ref={ref}
+      className={`glass reveal ${spotlight ? "spotlight" : ""} ${className}`}
       {...(spotlight ? handlers : {})}
-      initial={still ? false : { opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
-    </m.div>
+    </div>
   );
 }
 
+/**
+ * One observer for every reveal on the page, created on first use. Twenty
+ * separate IntersectionObservers is twenty sets of bookkeeping for a job that
+ * is identical each time.
+ */
+let revealObserver: IntersectionObserver | null = null;
+
+function watchForReveal(el: Element) {
+  if (typeof IntersectionObserver === "undefined") {
+    el.classList.add("is-in");
+    return () => {};
+  }
+  revealObserver ??= new IntersectionObserver(
+    (entries, observer) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        /* A quarter of the element, or — for anything taller than the screen,
+           which can never show a quarter of itself — simply being on screen.
+           `rootBounds` is null in a few cross-origin cases; there, showing it
+           is the safe answer. */
+        const root = entry.rootBounds?.height;
+        const tall = !root || entry.boundingClientRect.height > root * 0.6;
+        if (entry.intersectionRatio < 0.25 && !tall) continue;
+        entry.target.classList.add("is-in");
+        observer.unobserve(entry.target);
+      }
+    },
+    { threshold: [0, 0.25] }
+  );
+  revealObserver.observe(el);
+  return () => revealObserver?.unobserve(el);
+}
+
+/**
+ * The entrance. It used to be a JavaScript animation per element; during a fast
+ * scroll a dozen of them ran at once, each writing inline styles every frame,
+ * and that was most of the reason a phone stuttered. A class and a CSS
+ * transition do the same thing with one style write per element, ever.
+ */
 function Reveal({
   children,
   className = "",
@@ -277,17 +307,16 @@ function Reveal({
   className?: string;
   delay?: number;
 }) {
-  const still = useMotionOff();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => (ref.current ? watchForReveal(ref.current) : undefined), []);
   return (
-    <m.div
-      className={className}
-      initial={still ? false : { opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+    <div
+      ref={ref}
+      className={className ? `reveal ${className}` : "reveal"}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
-    </m.div>
+    </div>
   );
 }
 
@@ -376,9 +405,14 @@ function StatWithNote({
 }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
+  const pop = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
+    /* Opened from a tile near the foot of the screen, the note hangs below the
+       fold. Bringing it into view is simpler and steadier than flipping it
+       above the tile, which would put it under the sticky header instead. */
+    pop.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
@@ -411,6 +445,7 @@ function StatWithNote({
       {open && (
         <m.div
           className="glass stat-pop"
+          ref={pop}
           role="dialog"
           aria-label={buttonLabel}
           initial={{ opacity: 0, y: 8 }}
@@ -445,57 +480,108 @@ function SomaMark() {
   );
 }
 
-/** The process, as a rail that slides along while the section passes. */
-function ProcessRail({ lang }: { lang: Lang }) {
-  const rail = useRef<HTMLDivElement>(null);
-  const track = useRef<HTMLDivElement>(null);
+/**
+ * The process, typed out.
+ *
+ * One line that writes each step, holds it, wipes it and moves on. The text is
+ * written straight to the node rather than through React state — a re-render
+ * per character, six times a cycle, forever, is exactly the sort of thing this
+ * page has been getting rid of. Only the icon change costs a render, and that
+ * is once a step. It stops itself when the section is off screen.
+ */
+const TYPE_MS = 62;
+const WIPE_MS = 26;
+const HOLD_MS = 1500;
+
+function ProcessTyper({ lang }: { lang: Lang }) {
   const still = useMotionOff();
-  const { scrollYProgress } = useScroll({
-    target: rail,
-    offset: ["start end", "end start"],
-  });
-  const drift = useSpring(scrollYProgress, { stiffness: 90, damping: 30, restDelta: 0.001 });
+  const host = useRef<HTMLDivElement>(null);
+  const line = useRef<HTMLSpanElement>(null);
+  const [step, setStep] = useState(0);
 
-  /* How far the track has to move to bring its end into view. Measured rather
-     than guessed at a percentage: the card count is fixed but the rail's width
-     is not, so a share that reveals everything on a desktop leaves the last
-     steps unreachable on a phone. Held in a motion value, so re-measuring
-     never re-renders. */
-  const span = useMotionValue(0);
   useEffect(() => {
-    const railEl = rail.current;
-    const trackEl = track.current;
-    if (!railEl || !trackEl) return;
-    const measure = () => span.set(Math.max(0, trackEl.scrollWidth - railEl.clientWidth));
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(railEl);
-    observer.observe(trackEl);
-    return () => observer.disconnect();
-  }, [span]);
+    if (still) return;
+    const node = line.current;
+    const box = host.current;
+    if (!node || !box) return;
 
-  /* Runs between the section entering and leaving, with a little dead space at
-     each end so the first card is still there when the section is centred. */
-  const x = useTransform([drift, span], ([progress, distance]: number[]) => {
-    const eased = Math.min(1, Math.max(0, (progress - 0.12) / 0.72));
-    return -distance * eased;
-  });
+    let index = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let live = true;
+    let onScreen = true;
+
+    const words = () => processSteps.map((s) => t(s.title, lang));
+
+    const run = () => {
+      if (!live) return;
+      if (!onScreen) {
+        timer = setTimeout(run, 400);
+        return;
+      }
+      const word = words()[index];
+      let cut = 0;
+      const write = () => {
+        if (!live) return;
+        cut += 1;
+        node.textContent = word.slice(0, cut);
+        if (cut < word.length) timer = setTimeout(write, TYPE_MS);
+        else timer = setTimeout(wipe, HOLD_MS);
+      };
+      const wipe = () => {
+        if (!live) return;
+        cut -= 1;
+        node.textContent = word.slice(0, Math.max(0, cut));
+        if (cut > 0) timer = setTimeout(wipe, WIPE_MS);
+        else {
+          index = (index + 1) % processSteps.length;
+          setStep(index);
+          timer = setTimeout(run, 260);
+        }
+      };
+      write();
+    };
+
+    const watcher = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry.isIntersecting;
+      },
+      { rootMargin: "80px" }
+    );
+    watcher.observe(box);
+    run();
+
+    return () => {
+      live = false;
+      clearTimeout(timer);
+      watcher.disconnect();
+    };
+  }, [lang, still]);
+
+  const StepIcon = processSteps[step].icon;
 
   return (
-    <div className="process-rail" ref={rail}>
-      <m.div className="process-track" ref={track} style={still ? undefined : { x }}>
-        {processSteps.map((step) => {
-          const StepIcon = step.icon;
-          return (
-            <div className="glass process-step" key={step.title.en}>
-              <span className="process-icon">
-                <StepIcon />
-              </span>
-              <h3>{t(step.title, lang)}</h3>
-            </div>
-          );
-        })}
-      </m.div>
+    <div className="glass process-typer" ref={host}>
+      <span className="process-icon" key={step}>
+        <StepIcon />
+      </span>
+      <p className="process-line" aria-hidden={!still}>
+        <span ref={line}>{still ? t(processSteps[0].title, lang) : ""}</span>
+        {!still && <i className="process-caret" />}
+      </p>
+      {/* Where you are in the six, so the panel says more than one word at a
+          time and the line has something to sit against. */}
+      <span className="process-dots" aria-hidden="true">
+        {processSteps.map((s, i) => (
+          <i key={s.title.en} className={i === step ? "is-on" : undefined} />
+        ))}
+      </span>
+      {/* The steps in full for anyone the animation never reaches — a screen
+          reader, or a reader who has asked for less motion. */}
+      <ol className="process-list">
+        {processSteps.map((s) => (
+          <li key={s.title.en}>{t(s.title, lang)}</li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -686,7 +772,7 @@ export default function Home() {
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             >
               <span className="status-dot" />
-              {tr({ el: "ΔΙΑΘΕΣΙΜΟΣ ΓΙΑ ΝΕΑ PROJECTS", en: "AVAILABLE FOR NEW PROJECTS" })}
+              {tr({ el: "ΔΕΧΟΜΑΙ ΝΕΕΣ ΔΟΥΛΕΙΕΣ", en: "TAKING ON NEW WORK" })}
             </m.p>
 
             <h1 className="wordmark">
@@ -715,8 +801,8 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
             >
               {tr({
-                el: "Ψηφιακές εμπειρίες φτιαγμένες να ξεχωρίζουν.",
-                en: "Digital experiences built to stand out.",
+                el: "Φτιάχνω ιστοσελίδες που φέρνουν κόσμο στην επιχείρησή σας.",
+                en: "I make websites that bring people to your business.",
               })}
             </m.p>
 
@@ -735,145 +821,28 @@ export default function Home() {
                 Instagram
               </MagneticLink>
             </m.div>
+
+            {/* The two things a customer actually wants to know before they
+                call: when they get it, and whether it will be any good. */}
+            <m.div
+              className="hero-stats"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.48, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="glass stat-tile">
+                <b>{tr({ el: "2 εβδομάδες", en: "2 weeks" })}</b>
+                <span>{tr({ el: "Και είναι έτοιμη", en: "And it’s ready" })}</span>
+              </div>
+              <StatWithNote
+                value="98/100"
+                label={tr({ el: "Βαθμός Google", en: "Google score" })}
+                note={tr(scoreNote)}
+                buttonLabel={tr({ el: "Τι σημαίνει αυτό;", en: "What does this mean?" })}
+                closeLabel={tr({ el: "Κλείσιμο", en: "Close" })}
+              />
+            </m.div>
           </div>
-        </section>
-
-        {/* ---------------------------------------------------- Profile */}
-        <section className="shell" id="profile">
-          <div className="profile-grid">
-            <div>
-              <Reveal>
-                <p className="eyebrow">
-                  <i />
-                  {tr({ el: "ΠΡΟΦΙΛ", en: "PROFILE" })}
-                </p>
-                <h2 className="profile-title">
-                  {tr({ el: "Ένας άνθρωπος, ", en: "One person, " })}
-                  <em>{tr({ el: "όλη η διαδρομή.", en: "the whole journey." })}</em>
-                </h2>
-              </Reveal>
-
-              <Reveal delay={0.1}>
-                <div className="hero-stats">
-                  <div className="glass stat-tile">
-                    <b>{tr({ el: "≤ 2 εβδ.", en: "≤ 2 wks" })}</b>
-                    <span>{tr({ el: "Παράδοση", en: "Delivery" })}</span>
-                  </div>
-                  <StatWithNote
-                    value="98+"
-                    label="Lighthouse"
-                    note={tr(lighthouseNote)}
-                    buttonLabel={tr({ el: "Τι είναι το Lighthouse;", en: "What is Lighthouse?" })}
-                    closeLabel={tr({ el: "Κλείσιμο", en: "Close" })}
-                  />
-                </div>
-              </Reveal>
-            </div>
-
-            <Reveal className="hero-visual" delay={0.12}>
-              <span className="orbit-ring r1" aria-hidden="true" />
-              <span className="orbit-ring r2" aria-hidden="true" />
-
-              <SpotlightSurface className="profile-card">
-                <div className="profile-top">
-                  <span className="avatar-mark">
-                    <Image
-                      src="/logo-mark.webp"
-                      alt=""
-                      width={320}
-                      height={320}
-                    />
-                  </span>
-                  <div>
-                    <h3>{tr(profile.name)}</h3>
-                    <p>{tr(profile.role)}</p>
-                  </div>
-                </div>
-
-                <div className="profile-rows">
-                  <a className="profile-row" href={profile.phoneHref}>
-                    <Phone />
-                    <span>
-                      <small>{tr({ el: "Τηλέφωνο", en: "Phone" })}</small>
-                      {profile.phoneLabel}
-                    </span>
-                    <ArrowUpRight className="row-end" />
-                  </a>
-                  <a
-                    className="profile-row"
-                    href={profile.instagramHref}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <InstagramGlyph />
-                    <span>
-                      <small>Instagram</small>
-                      {profile.instagramHandle}
-                    </span>
-                    <ArrowUpRight className="row-end" />
-                  </a>
-                  <div className="profile-row">
-                    <GraduationCap />
-                    <span>
-                      <small>{tr({ el: "Σπουδές", en: "Studies" })}</small>
-                      {tr({ el: "Πληροφορική · ΑΣΟΕΕ", en: "Computer Science · AUEB" })}
-                    </span>
-                  </div>
-                </div>
-              </SpotlightSurface>
-
-              <m.div
-                className="glass float-card float-a"
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Gauge />
-                <span>
-                  <small>Performance</small>
-                  98 / 100
-                </span>
-              </m.div>
-
-              <m.div
-                className="glass float-card float-c"
-                animate={{ y: [0, -9, 0] }}
-                transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
-              >
-                <Code2 />
-                <span>
-                  <small>Code</small>
-                  {tr({ el: "Καθαρός & γρήγορος", en: "Clean & fast" })}
-                </span>
-              </m.div>
-
-              <m.div
-                className="glass float-card float-b"
-                animate={{ y: [0, 14, 0] }}
-                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-              >
-                <MonitorSmartphone />
-                <span>
-                  <small>{tr({ el: "Σχεδιασμός", en: "Design" })}</small>
-                  Mobile first
-                </span>
-              </m.div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ------------------------------------------------------ Stack */}
-        <section className="shell" id="stack">
-          <Reveal className="section-head-tight">
-            <p className="eyebrow">
-              <i />
-              {tr({ el: "ΤΕΧΝΟΛΟΓΙΕΣ", en: "TECHNOLOGIES" })}
-            </p>
-            <h2>
-              {tr({ el: "Το ", en: "My " })}
-              <em>{tr({ el: "stack μου.", en: "stack." })}</em>
-            </h2>
-          </Reveal>
-          <StackBubbles />
         </section>
 
         {/* --------------------------------------------------- Services */}
@@ -881,7 +850,7 @@ export default function Home() {
           <Reveal className="section-head-tight">
             <p className="eyebrow">
               <i />
-              {tr({ el: "ΥΠΗΡΕΣΙΕΣ", en: "SERVICES" })}
+              {tr({ el: "ΤΙ ΚΑΝΩ", en: "WHAT I DO" })}
             </p>
             <h2>
               {tr({ el: "Ό,τι χρειάζεται μια ", en: "Everything a business " })}
@@ -918,11 +887,11 @@ export default function Home() {
           <Reveal className="section-head-tight">
             <p className="eyebrow">
               <i />
-              {tr({ el: "ΕΡΓΑ", en: "WORK" })}
+              {tr({ el: "ΔΟΥΛΕΙΕΣ", en: "WORK" })}
             </p>
             <h2>
-              {tr({ el: "Projects που ", en: "Projects that " })}
-              <em>{tr({ el: "ξεχωρίζουν.", en: "stand out." })}</em>
+              {tr({ el: "Δουλειές που ", en: "Work that " })}
+              <em>{tr({ el: "ξεχωρίζουν.", en: "stands out." })}</em>
             </h2>
           </Reveal>
 
@@ -930,20 +899,20 @@ export default function Home() {
             <div className="work-meta">
               <p className="eyebrow">
                 <i />
-                HOSPITALITY · 2026
+                {tr({ el: "COCKTAIL BAR · 2026", en: "COCKTAIL BAR · 2026" })}
               </p>
               <h3>SOMA</h3>
               <p>
                 {tr({
-                  el: "Ψηφιακή ταυτότητα για ένα σύγχρονο cocktail bar.",
-                  en: "Digital identity for a modern cocktail bar.",
+                  el: "Σελίδα και εμφάνιση για ένα σύγχρονο cocktail bar.",
+                  en: "The site and the look for a modern cocktail bar.",
                 })}
               </p>
               <div className="work-tags">
                 {workTags.map((tag) => (
-                  <span className="chip" key={tag}>
+                  <span className="chip" key={tag.en}>
                     <Check />
-                    {tag}
+                    {tr(tag)}
                   </span>
                 ))}
               </div>
@@ -977,7 +946,7 @@ export default function Home() {
               >
                 {plan.featured && (
                   <span className="price-badge">
-                    {tr({ el: "Πιο δημοφιλές", en: "Most popular" })}
+                    {tr({ el: "Το πιο συνηθισμένο", en: "The usual choice" })}
                   </span>
                 )}
                 <p className="price-name">{tr(plan.name)}</p>
@@ -995,7 +964,7 @@ export default function Home() {
                   className={`btn ${plan.featured ? "btn-glass" : "btn-primary"}`}
                   href={profile.phoneHref}
                 >
-                  {tr({ el: "Ζητήστε προσφορά", en: "Request a quote" })}
+                  {tr({ el: "Πάρτε με τηλέφωνο", en: "Give me a call" })}
                   <ArrowUpRight />
                 </a>
               </GlassCard>
@@ -1008,15 +977,15 @@ export default function Home() {
           <Reveal className="section-head-tight">
             <p className="eyebrow">
               <i />
-              {tr({ el: "ΔΙΑΔΙΚΑΣΙΑ", en: "PROCESS" })}
+              {tr({ el: "ΠΩΣ ΔΟΥΛΕΥΩ", en: "HOW IT WORKS" })}
             </p>
             <h2>
-              {tr({ el: "Από την ιδέα ", en: "From idea " })}
-              <em>{tr({ el: "στην πραγματικότητα.", en: "to reality." })}</em>
+              {tr({ el: "Από την κουβέντα ", en: "From a chat " })}
+              <em>{tr({ el: "στη σελίδα σας.", en: "to your site." })}</em>
             </h2>
           </Reveal>
 
-          <ProcessRail lang={lang} />
+          <ProcessTyper lang={lang} />
         </section>
 
         {/* ------------------------------------------------------ About */}
@@ -1034,16 +1003,17 @@ export default function Home() {
               <p>
                 {en ? (
                   <>
-                    I’m <strong>Vangelis Markoulakis</strong>, a Computer Science student at
-                    AUEB. I design and build websites, apps and digital systems for
-                    businesses — a few projects at a time, so each one gets real attention.
+                    I’m <strong>Vangelis Markoulakis</strong>. I make websites and apps for
+                    businesses — the drawing and the building both, from the first sketch to
+                    the day it goes live. I take on a few jobs at a time, so each one is
+                    done properly.
                   </>
                 ) : (
                   <>
-                    Είμαι ο <strong>Βαγγέλης Μαρκουλάκης</strong>, φοιτητής Πληροφορικής στην
-                    ΑΣΟΕΕ. Σχεδιάζω και αναπτύσσω ιστοσελίδες, εφαρμογές και ψηφιακά
-                    συστήματα για επιχειρήσεις — λίγα projects τη φορά, ώστε το καθένα να
-                    παίρνει πραγματική προσοχή.
+                    Είμαι ο <strong>Βαγγέλης Μαρκουλάκης</strong>. Φτιάχνω ιστοσελίδες και
+                    εφαρμογές για επιχειρήσεις — και τον σχεδιασμό και την κατασκευή, από το
+                    πρώτο σκίτσο μέχρι τη μέρα που βγαίνουν στον αέρα. Παίρνω λίγες δουλειές
+                    τη φορά, ώστε η καθεμιά να γίνεται σωστά.
                   </>
                 )}
               </p>
