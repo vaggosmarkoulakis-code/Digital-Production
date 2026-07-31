@@ -1,10 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Commissioner, Manrope } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+/* Manrope carries the headlines and the wordmark — geometric, wide caps.
+   Commissioner does the reading: humanist, quieter, and it keeps small
+   letter-spaced labels legible. Both ship Greek, which the page needs. */
+const display = Manrope({
+  variable: "--font-display",
   subsets: ["latin", "greek"],
+  weight: ["600", "700", "800"],
+  display: "swap",
+});
+
+const sans = Commissioner({
+  variable: "--font-sans",
+  subsets: ["latin", "greek"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -34,6 +45,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 
@@ -48,7 +60,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="el">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+      <body className={`${display.variable} ${sans.variable} antialiased`}>{children}</body>
     </html>
   );
 }
