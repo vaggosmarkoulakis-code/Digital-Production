@@ -19,8 +19,22 @@ const sans = Commissioner({
   display: "swap",
 });
 
+/**
+ * Absolute URLs in the metadata — the link-preview image above all — are built
+ * from this. It used to be hardcoded to a domain that does not resolve, which
+ * pointed every preview at an image that could never load. Netlify supplies the
+ * real address of whatever is being built: DEPLOY_PRIME_URL is this deploy
+ * (a preview gets its own), URL is the production site and follows a custom
+ * domain automatically once one is attached.
+ */
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.DEPLOY_PRIME_URL ??
+  process.env.URL ??
+  "https://portofoliomds.netlify.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://markoulakis.dev"),
+  metadataBase: new URL(siteUrl),
   title: "Markoulakis Digital Studio | Βαγγέλης Μαρκουλάκης",
   description:
     "Portfolio του Βαγγέλη Μαρκουλάκη. Σχεδιάζω και αναπτύσσω σύγχρονες ιστοσελίδες, e-shops, mobile εφαρμογές και ψηφιακά εργαλεία για φιλόδοξες επιχειρήσεις.",
