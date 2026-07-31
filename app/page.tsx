@@ -14,17 +14,12 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowDown,
   ArrowUpRight,
-  Atom,
-  Boxes,
-  Braces,
   Check,
   CheckCircle2,
   Code2,
-  Flame,
   Gauge,
   Globe2,
   GraduationCap,
-  Hexagon,
   Languages,
   Layers,
   Mail,
@@ -38,11 +33,24 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  Triangle,
-  Wind,
   X,
   Zap,
 } from "lucide-react";
+import Metrics from "./metrics";
+import {
+  CssIcon,
+  FigmaIcon,
+  FirebaseIcon,
+  GitIcon,
+  HtmlIcon,
+  JavaScriptIcon,
+  NextIcon,
+  NodeIcon,
+  ReactIcon,
+  TailwindIcon,
+  TypeScriptIcon,
+  VercelIcon,
+} from "./tech-icons";
 
 /* ------------------------------------------------------------------ */
 /* Content                                                             */
@@ -65,11 +73,12 @@ const profile = {
 };
 
 const navLinks: Array<{ href: string; label: Copy }> = [
+  { href: "#profile", label: { el: "Προφίλ", en: "Profile" } },
   { href: "#services", label: { el: "Υπηρεσίες", en: "Services" } },
   { href: "#work", label: { el: "Έργα", en: "Work" } },
+  { href: "#metrics", label: { el: "Νούμερα", en: "Numbers" } },
   { href: "#pricing", label: { el: "Πακέτα", en: "Pricing" } },
   { href: "#process", label: { el: "Διαδικασία", en: "Process" } },
-  { href: "#about", label: { el: "Προφίλ", en: "Profile" } },
 ];
 
 const heroStats: Array<{ value: Copy; label: Copy }> = [
@@ -87,15 +96,35 @@ const heroStats: Array<{ value: Copy; label: Copy }> = [
   },
 ];
 
-const tech: Array<{ name: string; icon: LucideIcon }> = [
-  { name: "NEXT.JS", icon: Boxes },
-  { name: "REACT", icon: Atom },
-  { name: "TYPESCRIPT", icon: Braces },
-  { name: "TAILWIND", icon: Wind },
-  { name: "FIREBASE", icon: Flame },
-  { name: "NODE.JS", icon: Hexagon },
-  { name: "VERCEL", icon: Triangle },
-  { name: "FIGMA", icon: PenTool },
+/** Deterministic so the server and client render the same leaf field. */
+const leaves = [
+  { left: 5, size: 26, dur: 27, delay: -3, sway: 8, spin: 15, drift: 26, tone: "rgba(10, 92, 255, 0.16)" },
+  { left: 14, size: 17, dur: 34, delay: -14, sway: 11, spin: 21, drift: 18, tone: "rgba(93, 150, 255, 0.2)" },
+  { left: 23, size: 32, dur: 30, delay: -21, sway: 9, spin: 18, drift: 34, tone: "rgba(10, 62, 192, 0.12)" },
+  { left: 32, size: 20, dur: 38, delay: -7, sway: 13, spin: 25, drift: 22, tone: "rgba(10, 92, 255, 0.13)" },
+  { left: 41, size: 14, dur: 25, delay: -18, sway: 7, spin: 13, drift: 16, tone: "rgba(125, 175, 255, 0.24)" },
+  { left: 49, size: 28, dur: 36, delay: -30, sway: 12, spin: 23, drift: 30, tone: "rgba(10, 92, 255, 0.11)" },
+  { left: 58, size: 18, dur: 29, delay: -11, sway: 10, spin: 17, drift: 20, tone: "rgba(61, 124, 255, 0.19)" },
+  { left: 66, size: 34, dur: 41, delay: -25, sway: 14, spin: 27, drift: 36, tone: "rgba(10, 62, 192, 0.1)" },
+  { left: 74, size: 16, dur: 26, delay: -5, sway: 8, spin: 14, drift: 18, tone: "rgba(125, 175, 255, 0.22)" },
+  { left: 82, size: 24, dur: 33, delay: -16, sway: 11, spin: 20, drift: 28, tone: "rgba(10, 92, 255, 0.15)" },
+  { left: 89, size: 19, dur: 28, delay: -9, sway: 9, spin: 16, drift: 21, tone: "rgba(61, 124, 255, 0.17)" },
+  { left: 95, size: 30, dur: 39, delay: -27, sway: 13, spin: 24, drift: 32, tone: "rgba(10, 92, 255, 0.1)" },
+];
+
+const stack: Array<{ name: string; icon: (props: { className?: string }) => React.JSX.Element; group: Copy }> = [
+  { name: "TypeScript", icon: TypeScriptIcon, group: { el: "Γλώσσα", en: "Language" } },
+  { name: "JavaScript", icon: JavaScriptIcon, group: { el: "Γλώσσα", en: "Language" } },
+  { name: "HTML5", icon: HtmlIcon, group: { el: "Γλώσσα", en: "Language" } },
+  { name: "CSS3", icon: CssIcon, group: { el: "Γλώσσα", en: "Language" } },
+  { name: "React", icon: ReactIcon, group: { el: "Framework", en: "Framework" } },
+  { name: "Next.js", icon: NextIcon, group: { el: "Framework", en: "Framework" } },
+  { name: "Node.js", icon: NodeIcon, group: { el: "Backend", en: "Backend" } },
+  { name: "Firebase", icon: FirebaseIcon, group: { el: "Backend", en: "Backend" } },
+  { name: "Tailwind", icon: TailwindIcon, group: { el: "Styling", en: "Styling" } },
+  { name: "Figma", icon: FigmaIcon, group: { el: "Design", en: "Design" } },
+  { name: "Git", icon: GitIcon, group: { el: "Εργαλείο", en: "Tooling" } },
+  { name: "Vercel", icon: VercelIcon, group: { el: "Deploy", en: "Deploy" } },
 ];
 
 const services: Array<{
@@ -338,6 +367,61 @@ function InstagramGlyph({ className = "" }: { className?: string }) {
   );
 }
 
+function LeafShape() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2.6 21.4C2.6 11 10.9 2.6 21.4 2.6c0 10.5-8.4 18.8-18.8 18.8Z"
+        fill="currentColor"
+      />
+      <path
+        d="M2.6 21.4 21.4 2.6M8 19.2c1-3.2 3.3-5.6 6.5-6.6M5 15.4c.6-2 2.1-3.6 4.1-4.3"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        opacity=".55"
+      />
+    </svg>
+  );
+}
+
+/** Blue leaves drifting behind the glass. Purely decorative. */
+function LeafField() {
+  const reduced = useReducedMotion();
+  if (reduced) return null;
+  return (
+    <div className="leaf-field" aria-hidden="true">
+      {leaves.map((leaf, index) => (
+        <span
+          className="leaf"
+          key={index}
+          style={{
+            left: `${leaf.left}%`,
+            width: `${leaf.size}px`,
+            color: leaf.tone,
+            animationDuration: `${leaf.dur}s`,
+            animationDelay: `${leaf.delay}s`,
+          }}
+        >
+          <span
+            className="leaf-sway"
+            style={
+              {
+                animationDuration: `${leaf.sway}s`,
+                "--drift": `${leaf.drift}px`,
+              } as React.CSSProperties
+            }
+          >
+            <span className="leaf-spin" style={{ animationDuration: `${leaf.spin}s` }}>
+              <LeafShape />
+            </span>
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function setSpotlight(event: ReactMouseEvent<HTMLElement>) {
   const target = event.currentTarget;
   const rect = target.getBoundingClientRect();
@@ -432,10 +516,6 @@ function MagneticLink({
     </motion.a>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Ambient layers                                                      */
-/* ------------------------------------------------------------------ */
 
 function CursorGlow() {
   const reduced = useReducedMotion();
@@ -535,6 +615,7 @@ export default function Home() {
         <span className="aurora aurora-c" />
       </div>
       <div className="grid-veil" aria-hidden="true" />
+      <LeafField />
       <CursorGlow />
 
       <motion.div
@@ -619,61 +700,113 @@ export default function Home() {
 
       <main id="top">
         {/* ------------------------------------------------------- Hero */}
-        <section className="hero shell">
-          <div className="hero-grid">
+        <section className="hero">
+          <div className="hero-inner shell">
+            <motion.p
+              className="hero-kicker"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <span className="status-dot" />
+              {tr({ el: "PORTFOLIO · ΔΙΑΘΕΣΙΜΟΣ ΓΙΑ ΝΕΑ PROJECTS", en: "PORTFOLIO · AVAILABLE FOR NEW PROJECTS" })}
+            </motion.p>
+
+            <h1 className="wordmark">
+              <motion.span
+                className="wordmark-line"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+              >
+                MARKOULAKIS
+              </motion.span>
+              <motion.span
+                className="wordmark-line wordmark-accent"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              >
+                DIGITAL
+              </motion.span>
+            </h1>
+
+            <motion.p
+              className="hero-tagline"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {tr({
+                el: "Ψηφιακές εμπειρίες φτιαγμένες να ξεχωρίζουν.",
+                en: "Digital experiences built to stand out.",
+              })}
+            </motion.p>
+
+            <motion.p
+              className="hero-lead"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.36, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {tr({
+                el: "Σχεδιάζω και αναπτύσσω ιστοσελίδες, e-shops και εφαρμογές που δείχνουν premium, φορτώνουν γρήγορα και φέρνουν πραγματικά αποτελέσματα.",
+                en: "I design and build websites, online stores and applications that look premium, load fast and deliver real results.",
+              })}
+            </motion.p>
+
+            <motion.div
+              className="hero-actions"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.44, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <MagneticLink href={profile.phoneHref} className="btn btn-primary">
+                <Phone />
+                {tr({ el: "Καλέστε με", en: "Call me" })}
+              </MagneticLink>
+              <MagneticLink href={profile.instagramHref} className="btn btn-glass" external>
+                <InstagramGlyph />
+                Instagram
+              </MagneticLink>
+            </motion.div>
+
+            <motion.a
+              className="scroll-hint"
+              href="#profile"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              <i />
+              {tr({ el: "Κυλήστε για περισσότερα", en: "Scroll to explore" })}
+              <ArrowDown />
+            </motion.a>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------- Profile */}
+        <section className="shell" id="profile">
+          <div className="profile-grid">
             <div>
               <Reveal>
-                <p className="status-pill">
-                  <span className="status-dot" />
+                <p className="eyebrow">
+                  <i />
+                  {tr({ el: "ΤΟ ΠΡΟΦΙΛ ΜΟΥ", en: "MY PROFILE" })}
+                </p>
+                <h2 className="profile-title">
+                  {tr({ el: "Ένας άνθρωπος, ", en: "One person, " })}
+                  <em>{tr({ el: "όλη η διαδρομή.", en: "the whole journey." })}</em>
+                </h2>
+                <p className="profile-lead">
                   {tr({
-                    el: "Διαθέσιμος για νέα projects",
-                    en: "Available for new projects",
+                    el: "Από τη στρατηγική και το design μέχρι τον κώδικα και τη συντήρηση — χωρίς μεσάζοντες και χωρίς έτοιμα templates.",
+                    en: "From strategy and design through to code and maintenance — no middlemen and no ready-made templates.",
                   })}
                 </p>
-              </Reveal>
-
-              <Reveal delay={0.05}>
-                <h1>
-                  <span className="line">
-                    {tr({ el: "Ψηφιακές εμπειρίες", en: "Digital experiences" })}
-                  </span>
-                  <span className="line">
-                    {tr({ el: "φτιαγμένες να ", en: "built to " })}
-                    <em>{tr({ el: "ξεχωρίζουν.", en: "stand out." })}</em>
-                  </span>
-                </h1>
               </Reveal>
 
               <Reveal delay={0.1}>
-                <p className="hero-name">
-                  {tr(profile.name)} · {tr(profile.role)}
-                </p>
-                <p className="hero-lead">
-                  {tr({
-                    el: "Σχεδιάζω και αναπτύσσω ιστοσελίδες, e-shops και εφαρμογές που δείχνουν premium, φορτώνουν γρήγορα και φέρνουν πραγματικά αποτελέσματα στην επιχείρησή σας.",
-                    en: "I design and build websites, online stores and applications that look premium, load fast and deliver real results for your business.",
-                  })}
-                </p>
-              </Reveal>
-
-              <Reveal delay={0.15}>
-                <div className="hero-actions">
-                  <MagneticLink href={profile.phoneHref} className="btn btn-primary">
-                    <Phone />
-                    {tr({ el: "Καλέστε με", en: "Call me" })}
-                  </MagneticLink>
-                  <MagneticLink
-                    href={profile.instagramHref}
-                    className="btn btn-glass"
-                    external
-                  >
-                    <InstagramGlyph />
-                    Instagram
-                  </MagneticLink>
-                </div>
-              </Reveal>
-
-              <Reveal delay={0.2}>
                 <div className="hero-stats">
                   {heroStats.map((stat) => (
                     <div className="glass stat-tile" key={stat.label.en}>
@@ -683,22 +816,9 @@ export default function Home() {
                   ))}
                 </div>
               </Reveal>
-
-              <Reveal delay={0.25}>
-                <p className="scroll-hint">
-                  <i />
-                  {tr({ el: "Κυλήστε για περισσότερα", en: "Scroll to explore" })}
-                </p>
-              </Reveal>
             </div>
 
-            {/* Hero glass stack */}
-            <motion.div
-              className="hero-visual"
-              initial={{ opacity: 0, scale: 0.94 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            >
+            <Reveal className="hero-visual" delay={0.12}>
               <span className="orbit-ring r1" aria-hidden="true" />
               <span className="orbit-ring r2" aria-hidden="true" />
 
@@ -745,19 +865,13 @@ export default function Home() {
                 </div>
 
                 <div className="profile-skills">
-                  {[
-                    "Web Design",
-                    "UI/UX",
-                    "React / Next.js",
-                    "TypeScript",
-                    "Mobile Apps",
-                    "Firebase",
-                    "SEO",
-                  ].map((skill) => (
-                    <span className="skill-tag" key={skill}>
-                      {skill}
-                    </span>
-                  ))}
+                  {["Web Design", "UI/UX", "React / Next.js", "TypeScript", "Mobile Apps", "SEO"].map(
+                    (skill) => (
+                      <span className="skill-tag" key={skill}>
+                        {skill}
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
 
@@ -774,18 +888,6 @@ export default function Home() {
               </motion.div>
 
               <motion.div
-                className="glass float-card float-b"
-                animate={{ y: [0, 14, 0] }}
-                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-              >
-                <MonitorSmartphone />
-                <span>
-                  <small>{tr({ el: "Σχεδιασμός", en: "Design" })}</small>
-                  {tr({ el: "Mobile first", en: "Mobile first" })}
-                </span>
-              </motion.div>
-
-              <motion.div
                 className="glass float-card float-c"
                 animate={{ y: [0, -9, 0] }}
                 transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
@@ -796,27 +898,60 @@ export default function Home() {
                   {tr({ el: "Καθαρός & γρήγορος", en: "Clean & fast" })}
                 </span>
               </motion.div>
-            </motion.div>
+
+              <motion.div
+                className="glass float-card float-b"
+                animate={{ y: [0, 14, 0] }}
+                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+              >
+                <MonitorSmartphone />
+                <span>
+                  <small>{tr({ el: "Σχεδιασμός", en: "Design" })}</small>
+                  {tr({ el: "Mobile first", en: "Mobile first" })}
+                </span>
+              </motion.div>
+            </Reveal>
           </div>
         </section>
 
-        {/* --------------------------------------------------- Tech band */}
-        <div className="marquee-band">
-          <p>{tr({ el: "ΤΑ ΕΡΓΑΛΕΙΑ ΠΙΣΩ ΑΠΟ ΤΗΝ ΕΜΠΕΙΡΙΑ", en: "THE TOOLS BEHIND THE EXPERIENCE" })}</p>
-          <div className="marquee-track">
-            <div className="marquee">
-              {[...tech, ...tech].map((tool, index) => {
-                const ToolIcon = tool.icon;
-                return (
-                  <span key={`${tool.name}-${index}`}>
-                    <ToolIcon />
-                    {tool.name}
-                  </span>
-                );
-              })}
-            </div>
+        {/* ------------------------------------------------------ Stack */}
+        <section className="shell" id="stack">
+          <div className="section-head">
+            <Reveal>
+              <p className="eyebrow">
+                <i />
+                {tr({ el: "ΤΕΧΝΟΛΟΓΙΕΣ", en: "TECHNOLOGIES" })}
+              </p>
+              <h2>
+                {tr({ el: "Οι γλώσσες και τα εργαλεία ", en: "The languages and tools " })}
+                <em>{tr({ el: "που δουλεύω.", en: "I work in." })}</em>
+              </h2>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <p>
+                {tr({
+                  el: "Σύγχρονο web stack: typed κώδικας, component αρχιτεκτονική και υποδομή που σηκώνει την ανάπτυξη μιας επιχείρησης.",
+                  en: "A modern web stack: typed code, component architecture and infrastructure that scales with a business.",
+                })}
+              </p>
+            </Reveal>
           </div>
-        </div>
+
+          <div className="stack-grid">
+            {stack.map((tool, index) => {
+              const ToolIcon = tool.icon;
+              return (
+                <GlassCard className="stack-tile" key={tool.name} delay={(index % 6) * 0.04}>
+                  <span className="stack-icon">
+                    <ToolIcon />
+                  </span>
+                  <b>{tool.name}</b>
+                  <small>{tr(tool.group)}</small>
+                </GlassCard>
+              );
+            })}
+          </div>
+        </section>
 
         {/* --------------------------------------------------- Services */}
         <section className="shell" id="services">
@@ -850,9 +985,7 @@ export default function Home() {
                   key={service.title.en}
                   delay={index * 0.06}
                 >
-                  <span className="service-index">
-                    0{index + 1}
-                  </span>
+                  <span className="service-index">0{index + 1}</span>
                   <span className="service-icon">
                     <ServiceIcon />
                   </span>
@@ -939,16 +1072,14 @@ export default function Home() {
                 </div>
               </div>
               <div className="work-phone" aria-hidden="true">
-                <Image
-                  src="/soma-showcase.webp"
-                  alt=""
-                  fill
-                  sizes="130px"
-                />
+                <Image src="/soma-showcase.webp" alt="" fill sizes="130px" />
               </div>
             </div>
           </GlassCard>
         </section>
+
+        {/* ---------------------------------------------------- Metrics */}
+        <Metrics lang={lang} />
 
         {/* ---------------------------------------------------- Pricing */}
         <section className="shell" id="pricing">
@@ -1112,11 +1243,7 @@ export default function Home() {
                   <Phone />
                   {profile.phoneLabel}
                 </MagneticLink>
-                <MagneticLink
-                  href={profile.instagramHref}
-                  className="btn btn-glass"
-                  external
-                >
+                <MagneticLink href={profile.instagramHref} className="btn btn-glass" external>
                   <InstagramGlyph />
                   {profile.instagramHandle}
                 </MagneticLink>
@@ -1147,7 +1274,7 @@ export default function Home() {
         {/* ---------------------------------------------------- Contact */}
         <section className="shell" id="contact">
           <GlassCard className="contact-panel" spotlight={false}>
-            <p className="eyebrow" style={{ justifyContent: "center" }}>
+            <p className="eyebrow">
               <i />
               {tr({ el: "ΕΠΙΚΟΙΝΩΝΙΑ", en: "GET IN TOUCH" })}
             </p>

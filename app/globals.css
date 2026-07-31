@@ -39,6 +39,18 @@
   --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -1px 0 rgba(255, 255, 255, 0.35);
 
+  /* Chart tokens — validated with the dataviz palette validator against a
+     #f7faff chart surface. Single-series mark: 5.03:1 contrast. The four-step
+     ramp passes the ordinal checks (monotone L, ΔL >= 0.06, light end 2.15:1). */
+  --chart-surface: #f7faff;
+  --chart-grid: #dbe6f8;
+  --series-1: #0a5cff;
+  --meter-track: #d5e3ff;
+  --ramp-1: #7fadff;
+  --ramp-2: #5288ff;
+  --ramp-3: #1f63f5;
+  --ramp-4: #0a3fb4;
+
   /* Rhythm */
   --radius-lg: 30px;
   --radius-md: 20px;
@@ -199,6 +211,70 @@ ul {
   background-size: 68px 68px;
   mask-image: radial-gradient(110% 80% at 50% 0%, #000 0%, transparent 78%);
   -webkit-mask-image: radial-gradient(110% 80% at 50% 0%, #000 0%, transparent 78%);
+}
+
+/* Blue leaves drifting behind the glass ------------------------------- */
+
+.leaf-field {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.leaf {
+  position: absolute;
+  top: 0;
+  animation-name: leaf-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.leaf-sway {
+  display: block;
+  animation-name: leaf-sway;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.leaf-spin {
+  display: block;
+  animation-name: leaf-spin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.leaf svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@keyframes leaf-fall {
+  from {
+    transform: translate3d(0, -18vh, 0);
+  }
+  to {
+    transform: translate3d(0, 118vh, 0);
+  }
+}
+
+@keyframes leaf-sway {
+  from {
+    transform: translateX(calc(var(--drift, 20px) * -1));
+  }
+  to {
+    transform: translateX(var(--drift, 20px));
+  }
+}
+
+@keyframes leaf-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .cursor-glow {
@@ -607,29 +683,32 @@ section {
 }
 
 /* --------------------------------------------------------------------- */
-/* Hero                                                                   */
+/* Hero — the wordmark leads, everything else lives below                 */
 /* --------------------------------------------------------------------- */
 
 .hero {
-  padding-top: clamp(130px, 15vh, 190px);
-  padding-bottom: clamp(60px, 8vw, 110px);
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding-block: clamp(120px, 16vh, 180px) clamp(50px, 7vw, 90px);
+  text-align: center;
 }
 
-.hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
-  gap: clamp(32px, 5vw, 66px);
+.hero-inner {
+  display: flex;
+  flex-direction: column;
   align-items: center;
 }
 
-.status-pill {
+.hero-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 17px 9px 13px;
+  gap: 11px;
+  padding: 10px 20px 10px 15px;
   border-radius: 999px;
-  font-size: 0.74rem;
-  font-weight: 700;
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.19em;
   color: var(--ink-soft);
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(18px) saturate(180%);
@@ -667,53 +746,86 @@ section {
   }
 }
 
-.hero h1 {
-  font-size: clamp(2.7rem, 6.1vw, 5rem);
-  letter-spacing: -0.05em;
-  margin: 24px 0 0;
+.wordmark {
+  margin: clamp(24px, 3.5vw, 40px) 0 0;
+  font-size: clamp(2.6rem, 12.2vw, 10.5rem);
+  line-height: 0.86;
+  letter-spacing: -0.055em;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-.hero h1 .line {
+.wordmark-line {
   display: block;
-  overflow: hidden;
 }
 
-.hero h1 em {
-  font-style: normal;
-  background: linear-gradient(100deg, var(--electric) 10%, #34a8ff 90%);
+.wordmark-accent {
+  background: linear-gradient(100deg, var(--electric) 8%, #45b0ff 92%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  letter-spacing: 0.055em;
+  /* The gradient clip crops descenders/edges without a sliver of padding. */
+  padding-inline: 0.04em;
 }
 
-.hero-name {
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--electric-text);
-  margin-top: 26px;
+.hero-tagline {
+  margin-top: clamp(22px, 3vw, 34px);
+  font-size: clamp(1.05rem, 2vw, 1.55rem);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  max-width: 22ch;
 }
 
 .hero-lead {
-  margin-top: 22px;
-  font-size: clamp(1rem, 1.25vw, 1.12rem);
+  margin-top: 16px;
+  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
   color: var(--muted);
-  max-width: 52ch;
+  max-width: 56ch;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
-  margin-top: 34px;
+  margin-top: 32px;
+}
+
+/* --------------------------------------------------------------------- */
+/* Profile band                                                           */
+/* --------------------------------------------------------------------- */
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 66px);
+  align-items: center;
+}
+
+.profile-title {
+  font-size: clamp(1.9rem, 3.6vw, 3rem);
+  margin-top: 18px;
+}
+
+.profile-title em {
+  font-style: normal;
+  color: var(--electric);
+}
+
+.profile-lead {
+  margin-top: 18px;
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 46ch;
 }
 
 .hero-stats {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 34px;
+  margin-top: 32px;
 }
 
 .stat-tile {
@@ -952,67 +1064,399 @@ a.profile-row:hover {
 }
 
 /* --------------------------------------------------------------------- */
-/* Tech marquee                                                           */
+/* Tech stack                                                             */
 /* --------------------------------------------------------------------- */
 
-.marquee-band {
-  padding-block: clamp(30px, 4vw, 46px);
-  overflow: hidden;
-  border-block: 1px solid var(--hairline);
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.marquee-band > p {
-  text-align: center;
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 26px;
-}
-
-.marquee {
+.stack-tile {
+  padding: 20px 14px;
+  border-radius: var(--radius-md);
   display: flex;
-  width: max-content;
-  animation: marquee 30s linear infinite;
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent,
-    #000 8%,
-    #000 92%,
-    transparent
-  );
-}
-
-.marquee-track {
-  overflow: hidden;
-}
-
-.marquee span {
-  display: inline-flex;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin-right: 34px;
-  font-size: 0.95rem;
+  text-align: center;
+  transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+
+.stack-tile:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 34px 66px -30px rgba(10, 45, 120, 0.55), var(--glass-inset);
+}
+
+.stack-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  color: var(--electric);
+  background: rgba(10, 92, 255, 0.09);
+  border: 1px solid rgba(10, 92, 255, 0.16);
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+.stack-tile:hover .stack-icon {
+  background: linear-gradient(140deg, var(--electric), var(--electric-deep));
+  color: #fff;
+}
+
+.stack-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.stack-tile b {
+  font-size: 0.83rem;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
   color: var(--ink);
 }
 
-.marquee svg {
-  width: 18px;
-  height: 18px;
-  color: var(--electric);
+.stack-tile small {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
+/* --------------------------------------------------------------------- */
+/* Charts                                                                 */
+/* --------------------------------------------------------------------- */
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.chart-card {
+  --surface: var(--chart-surface);
+  padding: clamp(22px, 2.6vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin: 0;
+}
+
+.chart-card-wide {
+  grid-column: 1 / -1;
+}
+
+.chart-card figcaption h3 {
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.chart-card figcaption p {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* Meters ---------------------------------------------------------------- */
+
+.meter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 26px;
+}
+
+.meter-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.meter-head span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.meter-head b {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.meter-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--meter-track);
+  overflow: hidden;
+}
+
+.meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--series-1);
+}
+
+/* Bar chart ------------------------------------------------------------- */
+
+.bar-chart {
+  --label-w: 132px;
+  --value-w: 30px;
+  --col-gap: 12px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--label-w) minmax(0, 1fr) var(--value-w);
+  align-items: center;
+  row-gap: 4px;
+  column-gap: var(--col-gap);
+}
+
+/* Absolute so it never competes with the rows for a grid slot. */
+.bar-grid {
+  position: absolute;
+  top: 0;
+  bottom: 26px;
+  left: calc(var(--label-w) + var(--col-gap));
+  right: calc(var(--value-w) + var(--col-gap));
+  pointer-events: none;
+}
+
+.bar-grid i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--chart-grid);
+}
+
+.bar-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-height: 34px;
+  border-radius: 8px;
+}
+
+.bar-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.bar-plot {
+  position: relative;
+  display: block;
+  height: 20px;
+}
+
+.bar {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--series-1);
+}
+
+.bar-value {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar-axis {
+  position: relative;
+  grid-column: 2;
+  height: 18px;
+  margin-top: 6px;
+}
+
+.bar-axis span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 0.63rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Stacked bar ----------------------------------------------------------- */
+
+.stack-bar {
+  display: flex;
+  gap: 2px;
+  height: 22px;
+  margin-top: 4px;
+}
+
+.stack-seg {
+  position: relative;
+  flex: 0 0 auto;
+  border-radius: 2px;
+  display: grid;
+  place-items: center;
+}
+
+.stack-seg:first-child {
+  border-radius: 4px 2px 2px 4px;
+}
+
+.stack-seg:last-child {
+  border-radius: 2px 4px 4px 2px;
+}
+
+.stack-seg b {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-legend {
+  display: grid;
+  gap: 11px;
+  margin-top: 4px;
+}
+
+.chart-legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.chart-legend i {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+
+.chart-legend b {
+  margin-left: auto;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hover / focus layer --------------------------------------------------- */
+
+/* `display: none` rather than `opacity: 0` — a nowrap tooltip parked inside a
+   narrow segment would otherwise widen the document. */
+.chart-tip {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 7px 11px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(10, 21, 51, 0.94);
+  box-shadow: 0 14px 30px -14px rgba(10, 45, 120, 0.8);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.bar-row:hover .chart-tip,
+.bar-row:focus-visible .chart-tip,
+.stack-seg:hover .chart-tip,
+.stack-seg:focus-visible .chart-tip {
+  display: block;
+  animation: tip-in 0.18s var(--ease) both;
+}
+
+@keyframes tip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 5px);
   }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.bar-row:hover,
+.bar-row:focus-visible {
+  background: rgba(10, 92, 255, 0.05);
+}
+
+/* Table view ------------------------------------------------------------ */
+
+.chart-tables {
+  margin-top: 16px;
+}
+
+.chart-tables summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--electric-text);
+  padding: 10px 4px;
+}
+
+.chart-tables-inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.chart-tables table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+
+.chart-tables caption {
+  text-align: left;
+  font-weight: 800;
+  color: var(--ink);
+  padding-bottom: 8px;
+}
+
+.chart-tables th,
+.chart-tables td {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--hairline);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.chart-tables thead th {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.chart-tables td {
+  text-align: right;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1696,11 +2140,16 @@ a.profile-row:hover {
     display: none;
   }
 
-  .hero-grid,
+  .profile-grid,
   .work-card,
   .about-grid,
-  .section-head {
-    grid-template-columns: 1fr;
+  .section-head,
+  .chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stack-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .section-head {
@@ -1723,16 +2172,44 @@ a.profile-row:hover {
   }
 
   .hero {
-    padding-top: 120px;
+    min-height: auto;
+    padding-top: 118px;
   }
 
   .hero-actions .btn {
     flex: 1 1 100%;
   }
 
+  .hero-kicker {
+    font-size: 0.55rem;
+    letter-spacing: 0.13em;
+    padding: 9px 15px 9px 12px;
+  }
+
+  .stack-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .meter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .bar-chart {
+    --label-w: 92px;
+    --value-w: 26px;
+    --col-gap: 8px;
+  }
+
+  .bar-label,
+  .bar-value {
+    font-size: 0.7rem;
+  }
+
   .float-a,
   .float-b,
-  .float-c {
+  .float-c,
+  .orbit-ring {
     display: none;
   }
 
@@ -1778,9 +2255,15 @@ a.profile-row:hover {
 
   .aurora,
   .orbit-ring,
-  .marquee,
+  .leaf,
+  .leaf-sway,
+  .leaf-spin,
   .status-dot::after {
     animation: none !important;
+  }
+
+  .leaf-field {
+    display: none;
   }
 
   *,
