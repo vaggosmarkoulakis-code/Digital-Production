@@ -3,7 +3,14 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { motion, useMotionValue, useScroll, useSpring } from "framer-motion";
+import {
+  LazyMotion,
+  domAnimation,
+  m,
+  useMotionValue,
+  useScroll,
+  useSpring,
+} from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowDown,
@@ -208,11 +215,40 @@ function InstagramGlyph({ className = "" }: { className?: string }) {
   );
 }
 
-function setSpotlight(event: ReactMouseEvent<HTMLElement>) {
-  const target = event.currentTarget;
-  const rect = target.getBoundingClientRect();
-  target.style.setProperty("--mx", `${event.clientX - rect.left}px`);
-  target.style.setProperty("--my", `${event.clientY - rect.top}px`);
+/**
+ * `getBoundingClientRect` forces a layout, so measuring on every mousemove made
+ * the browser re-lay-out the page dozens of times a second. The box only moves
+ * when the pointer enters it, so measure there and reuse the result.
+ */
+function useSpotlight() {
+  const box = useRef<DOMRect | null>(null);
+  const onPointerEnter = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    box.current = event.currentTarget.getBoundingClientRect();
+  }, []);
+  const onPointerMove = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    const rect = box.current;
+    if (!rect) return;
+    const target = event.currentTarget;
+    target.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+    target.style.setProperty("--my", `${event.clientY - rect.top}px`);
+  }, []);
+  return { onPointerEnter, onPointerMove };
+}
+
+/** A plain glass surface with the spotlight, for cards that reveal elsewhere. */
+function SpotlightSurface({
+  className = "",
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const spotlight = useSpotlight();
+  return (
+    <div className={`glass spotlight ${className}`} {...spotlight}>
+      {children}
+    </div>
+  );
 }
 
 function GlassCard({
@@ -227,17 +263,18 @@ function GlassCard({
   spotlight?: boolean;
 }) {
   const still = useMotionOff();
+  const handlers = useSpotlight();
   return (
-    <motion.div
+    <m.div
       className={`glass ${spotlight ? "spotlight" : ""} ${className}`}
-      onMouseMove={spotlight ? setSpotlight : undefined}
+      {...(spotlight ? handlers : {})}
       initial={still ? false : { opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -252,7 +289,7 @@ function Reveal({
 }) {
   const still = useMotionOff();
   return (
-    <motion.div
+    <m.div
       className={className}
       initial={still ? false : { opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -260,7 +297,7 @@ function Reveal({
       transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -276,27 +313,38 @@ function MagneticLink({
   external?: boolean;
 }) {
   const still = useMotionOff();
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  /* Motion values rather than state: the pull is written straight to the
+     element, so moving the pointer never re-renders React. */
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const spring = { stiffness: 250, damping: 18 } as const;
+  const px = useSpring(x, spring);
+  const py = useSpring(y, spring);
+  const box = useRef<DOMRect | null>(null);
+
   return (
-    <motion.a
+    <m.a
       href={href}
       className={className}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      animate={offset}
-      transition={{ type: "spring", stiffness: 250, damping: 18 }}
-      onMouseMove={(event) => {
-        if (still) return;
-        const rect = event.currentTarget.getBoundingClientRect();
-        setOffset({
-          x: (event.clientX - rect.left - rect.width / 2) * 0.16,
-          y: (event.clientY - rect.top - rect.height / 2) * 0.24,
-        });
+      style={{ x: px, y: py }}
+      onPointerEnter={(event) => {
+        box.current = event.currentTarget.getBoundingClientRect();
       }}
-      onMouseLeave={() => setOffset({ x: 0, y: 0 })}
+      onPointerMove={(event) => {
+        const rect = box.current;
+        if (still || !rect) return;
+        x.set((event.clientX - rect.left - rect.width / 2) * 0.16);
+        y.set((event.clientY - rect.top - rect.height / 2) * 0.24);
+      }}
+      onPointerLeave={() => {
+        x.set(0);
+        y.set(0);
+      }}
     >
       {children}
-    </motion.a>
+    </m.a>
   );
 }
 
@@ -319,33 +367,25 @@ function CursorGlow() {
   }, [still, x, y]);
 
   if (still) return null;
-  return <motion.div className="cursor-glow" style={{ x: sx, y: sy }} aria-hidden="true" />;
+  return <m.div className="cursor-glow" style={{ x: sx, y: sy }} aria-hidden="true" />;
 }
 
 /* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-export default function Home() {
-  const [lang, setLang] = useState<Lang>("el");
+/**
+ * The nav owns every piece of scroll-driven state. Kept inside the page, each
+ * scroll-spy or sticky flip re-rendered the whole tree — the board's ninety-odd
+ * nodes, the bubbles and every card — for a change only the dock can see.
+ */
+function SiteNav({ lang, onToggleLang }: { lang: Lang; onToggleLang: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [stuck, setStuck] = useState(false);
   const [active, setActive] = useState("");
   const sheetRef = useRef<HTMLDivElement>(null);
-
-  const { scrollYProgress } = useScroll();
-  const progress = useSpring(scrollYProgress, {
-    stiffness: 140,
-    damping: 30,
-    restDelta: 0.001,
-  });
-
   const en = lang === "en";
-  const tr = useCallback((value: Copy) => t(value, lang), [lang]);
-
-  useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
+  const tr = (value: Copy) => t(value, lang);
 
   useEffect(() => {
     const onScroll = () => setStuck(window.scrollY > 24);
@@ -392,17 +432,6 @@ export default function Home() {
 
   return (
     <>
-      <div className="atmosphere" aria-hidden="true">
-        <span className="aurora aurora-a" />
-        <span className="aurora aurora-b" />
-        <span className="aurora aurora-c" />
-      </div>
-      <CircuitBoard />
-      <CursorGlow />
-
-      <motion.div className="scroll-progress" style={{ scaleX: progress }} aria-hidden="true" />
-
-      {/* ---------------------------------------------------------- Nav */}
       <header className={`nav-dock ${stuck ? "is-stuck" : ""}`}>
         <a className="brand" href="#top" aria-label={tr({ el: "Αρχή σελίδας", en: "Back to top" })}>
           <span className="brand-mark">
@@ -426,7 +455,7 @@ export default function Home() {
           <button
             type="button"
             className="lang-toggle"
-            onClick={() => setLang(en ? "el" : "en")}
+            onClick={onToggleLang}
             aria-label={en ? "Switch to Greek" : "Αλλαγή σε Αγγλικά"}
           >
             <Languages />
@@ -449,7 +478,7 @@ export default function Home() {
       </header>
 
       {menuOpen && (
-        <motion.div
+        <m.div
           ref={sheetRef}
           className="nav-sheet glass"
           initial={{ opacity: 0, y: -12 }}
@@ -465,14 +494,49 @@ export default function Home() {
             <Phone />
             {profile.phoneLabel}
           </a>
-        </motion.div>
+        </m.div>
       )}
+    </>
+  );
+}
+
+export default function Home() {
+  const [lang, setLang] = useState<Lang>("el");
+
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, {
+    stiffness: 140,
+    damping: 30,
+    restDelta: 0.001,
+  });
+
+  const en = lang === "en";
+  const tr = useCallback((value: Copy) => t(value, lang), [lang]);
+  const toggleLang = useCallback(() => setLang((current) => (current === "en" ? "el" : "en")), []);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  return (
+    <LazyMotion features={domAnimation} strict>
+      <div className="atmosphere" aria-hidden="true">
+        <span className="aurora aurora-a" />
+        <span className="aurora aurora-b" />
+        <span className="aurora aurora-c" />
+      </div>
+      <CircuitBoard />
+      <CursorGlow />
+
+      <m.div className="scroll-progress" style={{ scaleX: progress }} aria-hidden="true" />
+
+      <SiteNav lang={lang} onToggleLang={toggleLang} />
 
       <main id="top">
         {/* ------------------------------------------------------- Hero */}
         <section className="hero">
           <div className="hero-inner shell">
-            <motion.p
+            <m.p
               className="hero-kicker"
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -480,28 +544,28 @@ export default function Home() {
             >
               <span className="status-dot" />
               {tr({ el: "ΔΙΑΘΕΣΙΜΟΣ ΓΙΑ ΝΕΑ PROJECTS", en: "AVAILABLE FOR NEW PROJECTS" })}
-            </motion.p>
+            </m.p>
 
             <h1 className="wordmark">
-              <motion.span
+              <m.span
                 className="wordmark-line"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
               >
                 MARKOULAKIS
-              </motion.span>
-              <motion.span
+              </m.span>
+              <m.span
                 className="wordmark-line wordmark-accent"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
               >
                 DIGITAL STUDIO
-              </motion.span>
+              </m.span>
             </h1>
 
-            <motion.p
+            <m.p
               className="hero-tagline"
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -511,9 +575,9 @@ export default function Home() {
                 el: "Ψηφιακές εμπειρίες φτιαγμένες να ξεχωρίζουν.",
                 en: "Digital experiences built to stand out.",
               })}
-            </motion.p>
+            </m.p>
 
-            <motion.div
+            <m.div
               className="hero-actions"
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -527,9 +591,9 @@ export default function Home() {
                 <InstagramGlyph />
                 Instagram
               </MagneticLink>
-            </motion.div>
+            </m.div>
 
-            <motion.a
+            <m.a
               className="scroll-hint"
               href="#profile"
               initial={{ opacity: 0 }}
@@ -539,7 +603,7 @@ export default function Home() {
               <i />
               {tr({ el: "ΚΥΛΗΣΤΕ", en: "SCROLL" })}
               <ArrowDown />
-            </motion.a>
+            </m.a>
           </div>
         </section>
 
@@ -574,7 +638,7 @@ export default function Home() {
               <span className="orbit-ring r1" aria-hidden="true" />
               <span className="orbit-ring r2" aria-hidden="true" />
 
-              <div className="glass spotlight profile-card" onMouseMove={setSpotlight}>
+              <SpotlightSurface className="profile-card">
                 <div className="profile-top">
                   <span className="avatar-mark">
                     <MarkLogo />
@@ -615,9 +679,9 @@ export default function Home() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </SpotlightSurface>
 
-              <motion.div
+              <m.div
                 className="glass float-card float-a"
                 animate={{ y: [0, -12, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -627,9 +691,9 @@ export default function Home() {
                   <small>Performance</small>
                   98 / 100
                 </span>
-              </motion.div>
+              </m.div>
 
-              <motion.div
+              <m.div
                 className="glass float-card float-c"
                 animate={{ y: [0, -9, 0] }}
                 transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
@@ -639,9 +703,9 @@ export default function Home() {
                   <small>Code</small>
                   {tr({ el: "Καθαρός & γρήγορος", en: "Clean & fast" })}
                 </span>
-              </motion.div>
+              </m.div>
 
-              <motion.div
+              <m.div
                 className="glass float-card float-b"
                 animate={{ y: [0, 14, 0] }}
                 transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
@@ -651,7 +715,7 @@ export default function Home() {
                   <small>{tr({ el: "Σχεδιασμός", en: "Design" })}</small>
                   Mobile first
                 </span>
-              </motion.div>
+              </m.div>
             </Reveal>
           </div>
         </section>
@@ -1022,6 +1086,6 @@ export default function Home() {
           </div>
         </footer>
       </main>
-    </>
+    </LazyMotion>
   );
 }

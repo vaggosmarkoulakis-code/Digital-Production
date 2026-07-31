@@ -10,13 +10,8 @@
  * bottom means arriving at a finished board.
  */
 
-import {
-  motion,
-  useScroll,
-  useSpring,
-  useTransform,
-  type MotionValue,
-} from "framer-motion";
+import { m, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { memo } from "react";
 import { useMotionOff } from "./use-motion-off";
 
 const BOARD_W = 1440;
@@ -119,19 +114,38 @@ const windowFor = (y: number) => {
   return [start, start + 0.13] as const;
 };
 
+/* Windows are resolved once here rather than re-parsing `d` on every render. */
+const traceItems = traces.map((d) => {
+  const [start, end] = windowFor(points(d)[0]?.[1] ?? 0);
+  return { d, start, end };
+});
+
+const padItems = pads.map(([cx, cy, r]) => {
+  const at = windowFor(cy)[0] + 0.1;
+  return { cx, cy, r, from: at - 0.04, to: at + 0.03 };
+});
+
+const chipItems = chips.map((chip) => {
+  const [start, end] = windowFor(chip.y);
+  return { chip, pins: chipPins(chip), start, end };
+});
+
 function Trace({
   d,
+  start,
+  end,
   progress,
   width = 1.6,
 }: {
   d: string;
+  start: number;
+  end: number;
   progress: MotionValue<number>;
   width?: number;
 }) {
-  const [start, end] = windowFor(points(d)[0]?.[1] ?? 0);
   const pathLength = useTransform(progress, [start, end], [0, 1]);
   return (
-    <motion.path
+    <m.path
       d={d}
       fill="none"
       stroke="var(--circuit-line)"
@@ -147,18 +161,20 @@ function Pad({
   cx,
   cy,
   r,
+  from,
+  to,
   progress,
 }: {
   cx: number;
   cy: number;
   r: number;
+  from: number;
+  to: number;
   progress: MotionValue<number>;
 }) {
-  const [start] = windowFor(cy);
-  const at = start + 0.1;
-  const opacity = useTransform(progress, [at - 0.04, at + 0.03], [0, 1]);
+  const opacity = useTransform(progress, [from, to], [0, 1]);
   return (
-    <motion.circle
+    <m.circle
       cx={cx}
       cy={cy}
       r={r}
@@ -170,13 +186,24 @@ function Pad({
   );
 }
 
-function ChipPackage({ chip, progress }: { chip: Chip; progress: MotionValue<number> }) {
-  const [start, end] = windowFor(chip.y);
+function ChipPackage({
+  chip,
+  pins,
+  start,
+  end,
+  progress,
+}: {
+  chip: Chip;
+  pins: string;
+  start: number;
+  end: number;
+  progress: MotionValue<number>;
+}) {
   const outline = useTransform(progress, [start, end], [0, 1]);
   const fill = useTransform(progress, [start + 0.03, end], [0, 1]);
   return (
     <g>
-      <motion.rect
+      <m.rect
         x={chip.x}
         y={chip.y}
         width={chip.w}
@@ -185,15 +212,15 @@ function ChipPackage({ chip, progress }: { chip: Chip; progress: MotionValue<num
         fill="var(--circuit-chip)"
         style={{ opacity: fill }}
       />
-      <motion.path
-        d={chipPins(chip)}
+      <m.path
+        d={pins}
         fill="none"
         stroke="var(--circuit-line)"
         strokeWidth="2.2"
         strokeLinecap="round"
         style={{ pathLength: outline }}
       />
-      <motion.rect
+      <m.rect
         x={chip.x}
         y={chip.y}
         width={chip.w}
@@ -208,7 +235,7 @@ function ChipPackage({ chip, progress }: { chip: Chip; progress: MotionValue<num
   );
 }
 
-export default function CircuitBoard() {
+function CircuitBoard() {
   const still = useMotionOff();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, {
@@ -224,10 +251,10 @@ export default function CircuitBoard() {
     return (
       <div className="circuit-field is-static" aria-hidden="true">
         <svg viewBox={`0 0 ${BOARD_W} ${BOARD_H}`} preserveAspectRatio="xMidYMid meet">
-          {chips.map((chip) => (
-            <g key={`${chip.x}-${chip.y}`}>
-              <rect {...chip} fill="var(--circuit-chip)" stroke="var(--circuit-pad)" strokeWidth="2" />
-              <path d={chipPins(chip)} fill="none" stroke="var(--circuit-line)" strokeWidth="2.2" strokeLinecap="round" />
+          {chipItems.map((item) => (
+            <g key={`${item.chip.x}-${item.chip.y}`}>
+              <rect {...item.chip} fill="var(--circuit-chip)" stroke="var(--circuit-pad)" strokeWidth="2" />
+              <path d={item.pins} fill="none" stroke="var(--circuit-line)" strokeWidth="2.2" strokeLinecap="round" />
             </g>
           ))}
           {traces.map((d) => (
@@ -243,19 +270,29 @@ export default function CircuitBoard() {
 
   return (
     <div className="circuit-field" aria-hidden="true">
-      <motion.div className="circuit-travel" style={{ y: travel }}>
+      <m.div className="circuit-travel" style={{ y: travel }}>
         <svg viewBox={`0 0 ${BOARD_W} ${BOARD_H}`} preserveAspectRatio="xMidYMid slice">
-          {chips.map((chip) => (
-            <ChipPackage key={`${chip.x}-${chip.y}`} chip={chip} progress={progress} />
+          {chipItems.map((item) => (
+            <ChipPackage
+              key={`${item.chip.x}-${item.chip.y}`}
+              chip={item.chip}
+              pins={item.pins}
+              start={item.start}
+              end={item.end}
+              progress={progress}
+            />
           ))}
-          {traces.map((d) => (
-            <Trace key={d} d={d} progress={progress} />
+          {traceItems.map((item) => (
+            <Trace key={item.d} {...item} progress={progress} />
           ))}
-          {pads.map(([cx, cy, r], index) => (
-            <Pad key={`${cx}-${cy}-${index}`} cx={cx} cy={cy} r={r} progress={progress} />
+          {padItems.map((item, index) => (
+            <Pad key={`${item.cx}-${item.cy}-${index}`} {...item} progress={progress} />
           ))}
         </svg>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
+
+/* Props-free, so memo keeps the 90-odd board nodes out of every page render. */
+export default memo(CircuitBoard);

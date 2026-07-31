@@ -5,7 +5,8 @@
  * Names live in aria-label/title so the field still reads to assistive tech.
  */
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
+import { memo } from "react";
 import { useMotionOff } from "./use-motion-off";
 import {
   CssIcon,
@@ -46,12 +47,12 @@ const bubbles: Array<{
   { name: "Vercel", Icon: VercelIcon, x: 72, y: 88, size: 76, dur: 9.8, delay: 0.2, drift: -7 },
 ];
 
-export default function StackBubbles() {
+function StackBubbles() {
   const still = useMotionOff();
   return (
     <div className="bubble-field">
       {bubbles.map((bubble) => (
-        <motion.span
+        <m.span
           key={bubble.name}
           className="bubble"
           role="img"
@@ -76,8 +77,10 @@ export default function StackBubbles() {
           whileHover={{ scale: 1.09 }}
         >
           <bubble.Icon />
-        </motion.span>
+        </m.span>
       ))}
     </div>
   );
 }
+
+export default memo(StackBubbles);

@@ -143,11 +143,27 @@ ul {
   pointer-events: none;
 }
 
+/* No `filter: blur()` here: a radial gradient is already soft-edged, and
+   blurring a moving element forces a full re-rasterisation of a very large
+   area every frame — it cost ~54ms of every scroll frame on its own. The
+   falloff below reproduces the look with plain gradient stops. */
 .aurora {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
   will-change: transform;
+}
+
+/* A wash this wide bands into visible contours on an 8-bit display. This is a
+   dither layer: static, painted once, and it breaks the bands the way the old
+   blur did — without a filter re-rasterising a huge area every frame. */
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  opacity: 0.055;
+  pointer-events: none;
 }
 
 .aurora-a {
@@ -155,7 +171,20 @@ ul {
   height: 46vw;
   min-width: 380px;
   min-height: 380px;
-  background: radial-gradient(circle, rgba(10, 92, 255, 0.42), transparent 68%);
+  background: radial-gradient(
+    circle,
+    rgba(10, 92, 255, 0.32) 0%,
+    rgba(10, 92, 255, 0.302) 10%,
+    rgba(10, 92, 255, 0.256) 20%,
+    rgba(10, 92, 255, 0.194) 30%,
+    rgba(10, 92, 255, 0.132) 40%,
+    rgba(10, 92, 255, 0.08) 50%,
+    rgba(10, 92, 255, 0.043) 60%,
+    rgba(10, 92, 255, 0.021) 70%,
+    rgba(10, 92, 255, 0.009) 80%,
+    rgba(10, 92, 255, 0.004) 90%,
+    rgba(10, 92, 255, 0.0) 100%
+  );
   top: -14vw;
   right: -8vw;
   animation: float-a 22s var(--ease) infinite alternate;
@@ -166,7 +195,20 @@ ul {
   height: 40vw;
   min-width: 320px;
   min-height: 320px;
-  background: radial-gradient(circle, rgba(88, 150, 255, 0.34), transparent 66%);
+  background: radial-gradient(
+    circle,
+    rgba(88, 150, 255, 0.27) 0%,
+    rgba(88, 150, 255, 0.255) 10%,
+    rgba(88, 150, 255, 0.216) 20%,
+    rgba(88, 150, 255, 0.164) 30%,
+    rgba(88, 150, 255, 0.111) 40%,
+    rgba(88, 150, 255, 0.067) 50%,
+    rgba(88, 150, 255, 0.036) 60%,
+    rgba(88, 150, 255, 0.018) 70%,
+    rgba(88, 150, 255, 0.008) 80%,
+    rgba(88, 150, 255, 0.003) 90%,
+    rgba(88, 150, 255, 0.0) 100%
+  );
   top: 44vh;
   left: -12vw;
   animation: float-b 26s var(--ease) infinite alternate;
@@ -177,7 +219,20 @@ ul {
   height: 34vw;
   min-width: 280px;
   min-height: 280px;
-  background: radial-gradient(circle, rgba(0, 190, 255, 0.26), transparent 65%);
+  background: radial-gradient(
+    circle,
+    rgba(0, 190, 255, 0.21) 0%,
+    rgba(0, 190, 255, 0.198) 10%,
+    rgba(0, 190, 255, 0.168) 20%,
+    rgba(0, 190, 255, 0.127) 30%,
+    rgba(0, 190, 255, 0.086) 40%,
+    rgba(0, 190, 255, 0.052) 50%,
+    rgba(0, 190, 255, 0.028) 60%,
+    rgba(0, 190, 255, 0.014) 70%,
+    rgba(0, 190, 255, 0.006) 80%,
+    rgba(0, 190, 255, 0.002) 90%,
+    rgba(0, 190, 255, 0.0) 100%
+  );
   bottom: -10vw;
   right: 12vw;
   animation: float-a 30s var(--ease) infinite alternate-reverse;
