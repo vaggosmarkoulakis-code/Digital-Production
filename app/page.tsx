@@ -8,7 +8,6 @@ import {
   domAnimation,
   m,
   useMotionValue,
-  useMotionValueEvent,
   useScroll,
   useSpring,
 } from "framer-motion";
@@ -483,87 +482,107 @@ function SomaMark() {
 }
 
 /**
- * The process, as a carousel. It advances itself while the section passes, but
- * it is a real scroll container underneath — so anyone who wants to go back, or
- * ahead, or just look at one card, can swipe it. The first time they move it,
- * the automatic advance steps aside for good; nothing is more irritating than a
- * rail that drags itself out from under your thumb.
+ * The process, typed out.
+ *
+ * One line that writes each step, holds it, wipes it and moves on. The text is
+ * written straight to the node rather than through React state — a re-render
+ * per character, six times a cycle, forever, is exactly the sort of thing this
+ * page has been getting rid of. Only the icon change costs a render, and that
+ * is once a step. It stops itself when the section is off screen.
  */
-function ProcessRail({ lang }: { lang: Lang }) {
-  const rail = useRef<HTMLDivElement>(null);
+const TYPE_MS = 62;
+const WIPE_MS = 26;
+const HOLD_MS = 1500;
+
+function ProcessTyper({ lang }: { lang: Lang }) {
   const still = useMotionOff();
-  const { scrollYProgress } = useScroll({
-    target: rail,
-    offset: ["start end", "end start"],
-  });
-  const drift = useSpring(scrollYProgress, { stiffness: 90, damping: 30, restDelta: 0.001 });
+  const host = useRef<HTMLDivElement>(null);
+  const line = useRef<HTMLSpanElement>(null);
+  const [step, setStep] = useState(0);
 
-  /* The last position written from here, and whether the reader has taken over.
-     Refs, not state: the rail must not re-render on every frame of a scroll. */
-  const driven = useRef(-1);
-  const taken = useRef(false);
-  /* Mirrored into state once, purely so the container can switch on snapping.
-     Snap points and a frame-by-frame scrollLeft fight each other, so the rail
-     only starts snapping after it has stopped driving itself. */
-  const [handedOver, setHandedOver] = useState(false);
-
-  /* Handover is detected from the rail's own position, not from input events.
-     A touch is the wrong signal on a phone: the finger that scrolls the page
-     often lands on the rail first, and that must not count. A scrollLeft that
-     no longer matches what was last written can only have come from the reader. */
   useEffect(() => {
-    const el = rail.current;
-    if (!el) return;
-    const check = () => {
-      if (taken.current || driven.current < 0) return;
-      if (Math.abs(el.scrollLeft - driven.current) < 2) return;
-      taken.current = true;
-      setHandedOver(true);
-    };
-    el.addEventListener("scroll", check, { passive: true });
-    return () => el.removeEventListener("scroll", check);
-  }, []);
+    if (still) return;
+    const node = line.current;
+    const box = host.current;
+    if (!node || !box) return;
 
-  /* Travel is read off the container each frame rather than guessed at a
-     percentage: the card count is fixed but the rail's width is not, so a share
-     that reveals everything on a desktop leaves the last steps unreachable on a
-     phone. Writing scrollLeft keeps this outside React entirely. */
-  useMotionValueEvent(drift, "change", (progress) => {
-    const el = rail.current;
-    if (!el || taken.current || still) return;
-    const span = el.scrollWidth - el.clientWidth;
-    if (span <= 0) return;
-    /* A little dead space at each end, so the first card is still the first
-       card when the section arrives at the middle of the screen. */
-    const eased = Math.min(1, Math.max(0, (progress - 0.12) / 0.72));
-    const next = span * eased;
-    if (Math.abs(next - el.scrollLeft) > 0.5) {
-      el.scrollLeft = next;
-      driven.current = el.scrollLeft;
-    }
-  });
+    let index = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let live = true;
+    let onScreen = true;
+
+    const words = () => processSteps.map((s) => t(s.title, lang));
+
+    const run = () => {
+      if (!live) return;
+      if (!onScreen) {
+        timer = setTimeout(run, 400);
+        return;
+      }
+      const word = words()[index];
+      let cut = 0;
+      const write = () => {
+        if (!live) return;
+        cut += 1;
+        node.textContent = word.slice(0, cut);
+        if (cut < word.length) timer = setTimeout(write, TYPE_MS);
+        else timer = setTimeout(wipe, HOLD_MS);
+      };
+      const wipe = () => {
+        if (!live) return;
+        cut -= 1;
+        node.textContent = word.slice(0, Math.max(0, cut));
+        if (cut > 0) timer = setTimeout(wipe, WIPE_MS);
+        else {
+          index = (index + 1) % processSteps.length;
+          setStep(index);
+          timer = setTimeout(run, 260);
+        }
+      };
+      write();
+    };
+
+    const watcher = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry.isIntersecting;
+      },
+      { rootMargin: "80px" }
+    );
+    watcher.observe(box);
+    run();
+
+    return () => {
+      live = false;
+      clearTimeout(timer);
+      watcher.disconnect();
+    };
+  }, [lang, still]);
+
+  const StepIcon = processSteps[step].icon;
 
   return (
-    <div
-      className={handedOver ? "process-rail is-manual" : "process-rail"}
-      ref={rail}
-      tabIndex={0}
-      role="group"
-      aria-label={lang === "el" ? "Τα βήματα της διαδικασίας" : "The steps of the process"}
-    >
-      <div className="process-track">
-        {processSteps.map((step) => {
-          const StepIcon = step.icon;
-          return (
-            <div className="glass process-step" key={step.title.en}>
-              <span className="process-icon">
-                <StepIcon />
-              </span>
-              <h3>{t(step.title, lang)}</h3>
-            </div>
-          );
-        })}
-      </div>
+    <div className="glass process-typer" ref={host}>
+      <span className="process-icon" key={step}>
+        <StepIcon />
+      </span>
+      <p className="process-line" aria-hidden={!still}>
+        <span ref={line}>{still ? t(processSteps[0].title, lang) : ""}</span>
+        {!still && <i className="process-caret" />}
+      </p>
+      {/* Where you are in the six, so the panel says more than one word at a
+          time and the line has something to sit against. */}
+      <span className="process-dots" aria-hidden="true">
+        {processSteps.map((s, i) => (
+          <i key={s.title.en} className={i === step ? "is-on" : undefined} />
+        ))}
+      </span>
+      {/* The steps in full for anyone the animation never reaches — a screen
+          reader, or a reader who has asked for less motion. */}
+      <ol className="process-list">
+        {processSteps.map((s) => (
+          <li key={s.title.en}>{t(s.title, lang)}</li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -1076,7 +1095,7 @@ export default function Home() {
             </h2>
           </Reveal>
 
-          <ProcessRail lang={lang} />
+          <ProcessTyper lang={lang} />
         </section>
 
         {/* ------------------------------------------------------ About */}

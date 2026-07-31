@@ -1738,63 +1738,85 @@ a.profile-row:hover {
 /* Process                                                                */
 /* --------------------------------------------------------------------- */
 
-/* The rail advances by itself while the section passes, so the steps read in
-   order without anyone having to drag anything — but it is a genuine scroll
-   container, so it can also be swiped. `overscroll-behavior-x: contain` keeps a
-   swipe past the last card from triggering the browser's back gesture. */
-.process-rail {
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: contain;
-  /* Explicitly instant: a smooth scroll would animate away from the position
-     just written and read as the reader having grabbed the rail. */
-  scroll-behavior: auto;
-  margin-inline: calc(var(--pad-x) * -1);
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+/* One line that writes each step out, holds it and moves on. Nothing scrolls,
+   nothing slides — the only thing that changes is the text in the line and the
+   icon beside it. */
+.process-typer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 26px);
+  padding: clamp(26px, 3.4vw, 44px) clamp(24px, 3.4vw, 46px);
+  border-radius: var(--radius-lg);
 }
 
-.process-rail::-webkit-scrollbar {
-  display: none;
-}
-
-/* Snapping only once the reader has taken the wheel: snap points and a
-   frame-by-frame scrollLeft pull in opposite directions. */
-.process-rail.is-manual {
-  scroll-snap-type: x proximity;
-}
-
-.process-rail:focus-visible {
-  outline: 2px solid var(--electric);
-  outline-offset: 4px;
-  border-radius: var(--radius-md);
-}
-
-/* The inset lives on the track, so its scrollWidth already accounts for it and
-   the travel lands the last card exactly inside the page padding. */
-.process-track {
+.process-line {
+  /* Held at the height of one line, so the panel never jumps as the words
+     change length. */
+  min-height: 1.25em;
   display: flex;
-  gap: 14px;
-  width: max-content;
-  padding-inline: var(--pad-x);
-  /* Room for the hover lift and the cards' shadows, which the container's
-     vertical clip would otherwise shave off. */
-  padding-block: 10px 14px;
+  align-items: baseline;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.6rem, 4.6vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: var(--electric-text);
 }
 
-.process-step {
-  flex: 0 0 clamp(200px, 21vw, 264px);
-  scroll-snap-align: center;
-  padding: 26px;
-  border-radius: var(--radius-md);
+.process-caret {
+  display: inline-block;
+  width: 3px;
+  align-self: stretch;
+  margin-left: 6px;
+  border-radius: 2px;
+  background: var(--electric);
+  animation: caret-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.process-dots {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
-  transition: transform 0.4s var(--ease);
+  align-items: center;
+  gap: 7px;
 }
 
-.process-step:hover {
-  transform: translateY(-6px);
+.process-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--circuit-pad);
+  transition: width 0.45s var(--ease), background 0.45s var(--ease);
+}
+
+.process-dots i.is-on {
+  width: 26px;
+  background: var(--electric);
+}
+
+/* The full list, for a screen reader or anyone who has asked for less motion.
+   `clip` rather than `display: none`, which would take it out of the
+   accessibility tree along with everything else. */
+.process-list {
+  grid-column: 1 / -1;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .process-icon {
@@ -1813,8 +1835,28 @@ a.profile-row:hover {
   height: 21px;
 }
 
-.process-step h3 {
-  font-size: 1.05rem;
+/* Keyed on the step, so React swaps the node and this replays each time. */
+.process-typer .process-icon {
+  width: clamp(48px, 5.4vw, 62px);
+  height: clamp(48px, 5.4vw, 62px);
+  border-radius: 18px;
+  animation: icon-swap 0.45s var(--ease);
+}
+
+.process-typer .process-icon svg {
+  width: 45%;
+  height: 45%;
+}
+
+@keyframes icon-swap {
+  from {
+    opacity: 0;
+    scale: 0.72;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
 }
 
 /* --------------------------------------------------------------------- */
@@ -2090,6 +2132,16 @@ a.profile-row:hover {
     display: none;
   }
 
+  /* No room for the dots beside the line on a phone, so they go under it. */
+  .process-typer {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 16px;
+  }
+
+  .process-dots {
+    grid-column: 1 / -1;
+  }
+
   .hero {
     min-height: auto;
     padding-top: 118px;
@@ -2192,6 +2244,28 @@ a.profile-row:hover {
   .reveal {
     opacity: 1;
     translate: 0 0;
+  }
+
+  /* Nothing types itself: the panel shows the first step and then the whole
+     list, plainly. */
+  .process-caret {
+    display: none;
+  }
+
+  .process-list {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 14px 0 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
   }
 
   *,
