@@ -565,7 +565,9 @@ function SiteNav({ lang, onToggleLang }: { lang: Lang; onToggleLang: () => void 
       <header className={`nav-dock ${stuck ? "is-stuck" : ""}`}>
         <a className="brand" href="#top" aria-label={tr({ el: "Αρχή σελίδας", en: "Back to top" })}>
           <span className="brand-mark">
-            <Image src="/logo-mark.webp" alt="" width={320} height={320} />
+            {/* Above the fold and the first thing that identifies the site, so
+                it loads eagerly rather than popping in after the nav paints. */}
+            <Image src="/logo-mark.webp" alt="" width={320} height={320} priority />
           </span>
           <span className="brand-text">
             <b>MARKOULAKIS</b>
